@@ -4,6 +4,7 @@
 export const ASSETS = {
   logo: '/assets/scribbld-01.svg',
   line: '/assets/scribbld_Line.svg',
+  rectangle: '/assets/scribbld_Rectangle.svg',
   square: '/assets/scribbld_Square.svg',
   eraser: '/assets/scribbld_Eraser.svg',
   pencil: '/assets/scribbld_Pencil.svg',

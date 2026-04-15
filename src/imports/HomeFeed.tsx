@@ -7,14 +7,23 @@ function Header({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="absolute contents left-0 top-[-10px]" data-name="Header">
       <div className="absolute flex h-[118px] items-center justify-center left-0 top-0 w-[393px]">
-        <div className="flex-none rotate-180">
-          <div className="bg-[#f9fdff] h-[118px] w-[393px] relative" data-name="HeaderRectangle">
-            <img src={ASSETS.line} alt="" className="absolute top-0 left-0 w-full h-[3px] object-cover" />
-          </div>
+        <div className="bg-[#f9fdff] h-[118px] w-[393px] relative overflow-hidden" data-name="HeaderRectangle">
+          <img
+            src={ASSETS.rectangle}
+            alt=""
+            className="absolute inset-0 size-full object-fill pointer-events-none z-[1]"
+            aria-hidden
+          />
+          <img
+            src={ASSETS.line}
+            alt=""
+            className="absolute left-0 right-0 top-0 z-[2] h-[14px] w-full object-cover object-top pointer-events-none select-none"
+            aria-hidden
+          />
         </div>
       </div>
       <div
-        className="absolute h-[142px] left-[81px] top-[-10px] w-[230px] cursor-pointer hover:scale-105 transition-transform"
+        className="absolute h-[142px] left-[81px] top-[-10px] w-[230px] z-10 cursor-pointer hover:scale-105 transition-transform"
         data-name="scribbld-01 1"
         onClick={() => navigate('/splash')}
       >
@@ -27,23 +36,34 @@ function Header({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
 function Footer({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[393px] z-50" data-name="Footer">
-      <div className="bg-[#f9fdff] h-[93px] w-full relative" data-name="FooterRectangle">
-        <img src={ASSETS.line} alt="" className="absolute top-0 left-0 w-full h-[3px] object-cover" />
+      <div className="bg-[#f9fdff] h-[93px] w-full relative overflow-hidden" data-name="FooterRectangle">
+        <img
+          src={ASSETS.rectangle}
+          alt=""
+          className="absolute inset-0 size-full object-fill pointer-events-none z-[1]"
+          aria-hidden
+        />
+        <img
+          src={ASSETS.line}
+          alt=""
+          className="absolute left-0 right-0 top-0 z-[2] h-[14px] w-full object-cover object-top pointer-events-none select-none"
+          aria-hidden
+        />
         <div
-          className="absolute left-[164px] size-[64px] top-[15px] cursor-pointer hover:scale-105 transition-transform"
+          className="absolute left-[164px] size-[64px] top-[15px] z-10 cursor-pointer hover:scale-105 transition-transform"
           data-name="scribbld_Plus 1"
           onClick={() => navigate('/create')}
         >
           <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={ASSETS.plus} />
         </div>
         <div
-          className="absolute left-[280px] size-[64px] top-[15px] cursor-pointer hover:scale-105 transition-transform"
+          className="absolute left-[280px] size-[64px] top-[15px] z-10 cursor-pointer hover:scale-105 transition-transform"
           data-name="scribbld_Profile 1"
           onClick={() => navigate('/profile')}
         >
           <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={ASSETS.profile} />
         </div>
-        <div className="absolute left-[49px] size-[63px] top-[16px]" data-name="scribbld_HomeFilled 1">
+        <div className="absolute left-[49px] size-[63px] top-[16px] z-10" data-name="scribbld_HomeFilled 1">
           <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={ASSETS.homeFilled} />
         </div>
       </div>
@@ -114,7 +134,7 @@ export default function HomeFeed() {
                   className="absolute inset-[10px] size-[calc(100%-20px)] object-contain rounded-[22px] z-0"
                 />
                 <img
-                  src={ASSETS.square}
+                  src={ASSETS.rectangle}
                   alt=""
                   className="absolute inset-0 size-full object-fill pointer-events-none z-10 rounded-[31px]"
                 />
