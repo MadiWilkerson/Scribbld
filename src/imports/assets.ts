@@ -1,16 +1,18 @@
 /**
- * Raster assets for SCRIBBLD. Place PNGs in `public/assets/` with these filenames.
+ * UI assets (SVG). Files live in `public/assets/` (exported from P3 Assets/SVG Files).
  */
 export const ASSETS = {
-  logo: '/assets/scribbld-01.png',
-  line: '/assets/scribbld-Line.png',
-  square: '/assets/scribbld-Square.png',
-  eraser: '/assets/scribbld-eraser.png',
-  pencil: '/assets/scribbld-pencil.png',
-  check: '/assets/scribbld-check.png',
-  exit: '/assets/scribbld-exit.png',
-  home: '/assets/scribbld-home.png',
-  profile: '/assets/scribbld-profile.png',
-  plus: '/assets/scribbld-plus.png',
-  homeFilled: '/assets/scribbld-home-filled.png',
+  logo: '/assets/scribbld-01.svg',
+  line: '/assets/scribbld_Line.svg',
+  square: '/assets/scribbld_Square.svg',
+  eraser: '/assets/scribbld_Eraser.svg',
+  pencil: '/assets/scribbld_Pencil.svg',
+  check: '/assets/scribbld_Check.svg',
+  exit: '/assets/scribbld_Exit.svg',
+  home: '/assets/scribbld_Home.svg',
+  profile: '/assets/scribbld_Profile.svg',
+  plus: '/assets/scribbld_Plus.svg',
+  homeFilled: '/assets/scribbld_HomeFilled.svg',
+  heart: '/assets/scribbld_Heart.svg',
+  heartFilled: '/assets/scribbld_HeartFilled.svg',
 } as const

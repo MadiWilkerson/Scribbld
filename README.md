@@ -9,4 +9,4 @@ npm install
 npm run dev
 ```
 
-Add PNGs listed in `src/imports/assets.ts` under `public/assets/`.
+UI SVGs live in `public/assets/` (synced from `P3 Assets/SVG Files`). See `src/imports/assets.ts` for paths.
