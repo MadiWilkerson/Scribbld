@@ -17,12 +17,25 @@ import {
   parseMonsterConfig,
   stringifyMonsterConfig,
 } from './monsterConfig'
-import { displayLabel, PROFILE_HUB_VIEWING_KEY, upsertSavedProfile } from './savedProfiles'
+import {
+  displayLabel,
+  loadSavedProfiles,
+  PROFILE_HUB_VIEWING_KEY,
+  resolveMonsterForUser,
+  upsertSavedProfile,
+} from './savedProfiles'
 
 const STORAGE_KEY = 'userMonster'
 const USER_NAME_KEY = 'userName'
+const DRAWINGS_KEY = 'drawings'
 
-type ProfileLocationState = { blankSlate?: boolean }
+type ProfileLocationState = { blankSlate?: boolean; editProfileName?: string }
+
+/** When editing another profile’s avatar, don’t overwrite the signed-in user’s localStorage until Done (and only if they’re the same person). */
+function shouldSyncActiveSession(editProfileName: string | undefined): boolean {
+  if (editProfileName === undefined) return true
+  return displayLabel(editProfileName) === displayLabel(localStorage.getItem(USER_NAME_KEY) || '')
+}
 
 /** 3 columns, compact tiles for mobile — 3×44px + 2×6px gaps */
 const PICKER_COL_WIDTH = 'w-[144px] max-w-[90vw]'
@@ -68,15 +81,27 @@ function FeatureRow({
 export default function Profile() {
   const navigate = useNavigate()
   const location = useLocation()
-  const blankSlate = Boolean((location.state as ProfileLocationState | null)?.blankSlate)
+  const state = location.state as ProfileLocationState | null
+  const blankSlate = Boolean(state?.blankSlate)
+  const editProfileName = state?.editProfileName
 
   const [name, setName] = useState('')
   const [config, setConfig] = useState<MonsterConfig>(DEFAULT_MONSTER)
 
   useEffect(() => {
-    if ((location.state as ProfileLocationState | null)?.blankSlate) {
+    const s = location.state as ProfileLocationState | null
+    if (s?.blankSlate) {
       setName('')
       setConfig(DEFAULT_MONSTER)
+      return
+    }
+    if (s?.editProfileName) {
+      const label = displayLabel(s.editProfileName)
+      setName(label)
+      const profiles = loadSavedProfiles()
+      const rawD = localStorage.getItem(DRAWINGS_KEY)
+      const drawingsList = rawD ? JSON.parse(rawD) : []
+      setConfig(resolveMonsterForUser(label, profiles, drawingsList))
       return
     }
     setName(localStorage.getItem(USER_NAME_KEY) || 'Anonymous')
@@ -87,16 +112,17 @@ export default function Profile() {
     } else if (raw && (raw.startsWith('data:') || raw.startsWith('http'))) {
       setConfig(DEFAULT_MONSTER)
     }
-  }, [location.state])
+  }, [location.key, location.state])
 
   const persist = useCallback(
     (next: MonsterConfig) => {
       setConfig(next)
-      if (!blankSlate) {
+      if (blankSlate) return
+      if (shouldSyncActiveSession(editProfileName)) {
         localStorage.setItem(STORAGE_KEY, stringifyMonsterConfig(next))
       }
     },
-    [blankSlate],
+    [blankSlate, editProfileName],
   )
 
   const setShape = (shape: MonsterConfig['shape']) => persist({ ...config, shape })
@@ -108,10 +134,11 @@ export default function Profile() {
   const commitName = useCallback(() => {
     const trimmed = name.trim() || 'Anonymous'
     setName(trimmed)
-    if (!blankSlate) {
+    if (blankSlate) return
+    if (shouldSyncActiveSession(editProfileName)) {
       localStorage.setItem(USER_NAME_KEY, trimmed)
     }
-  }, [name, blankSlate])
+  }, [name, blankSlate, editProfileName])
 
   return (
     <div
@@ -215,10 +242,12 @@ export default function Profile() {
               onClick={() => {
                 const trimmed = name.trim() || 'Anonymous'
                 setName(trimmed)
-                localStorage.setItem(USER_NAME_KEY, trimmed)
-                localStorage.setItem(STORAGE_KEY, stringifyMonsterConfig(config))
-                localStorage.setItem(PROFILE_HUB_VIEWING_KEY, displayLabel(trimmed))
                 upsertSavedProfile(trimmed, config)
+                localStorage.setItem(PROFILE_HUB_VIEWING_KEY, displayLabel(trimmed))
+                if (blankSlate || shouldSyncActiveSession(editProfileName)) {
+                  localStorage.setItem(USER_NAME_KEY, trimmed)
+                  localStorage.setItem(STORAGE_KEY, stringifyMonsterConfig(config))
+                }
                 navigate('/profile')
               }}
             >

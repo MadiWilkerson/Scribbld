@@ -195,7 +195,16 @@ export default function ProfileHubPage() {
           </div>
 
           <div className="flex w-full flex-col items-center gap-2">
-            <MonsterAvatar config={avatarConfig} size={120} />
+            <button
+              type="button"
+              className="cursor-pointer rounded-full border-0 bg-transparent p-0 ring-2 ring-transparent transition duration-200 ease-out hover:scale-[1.04] hover:ring-[#0f1027]/25 hover:shadow-[0_10px_28px_-12px_rgba(15,16,39,0.35)] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f1027]/35"
+              aria-label="Edit avatar"
+              onClick={() =>
+                navigate('/profile/create', { state: { editProfileName: viewingName } })
+              }
+            >
+              <MonsterAvatar config={avatarConfig} size={120} />
+            </button>
             <div
               ref={nameMenuRef}
               className="relative z-50 flex w-full max-w-[min(100%,280px)] flex-col items-center"
