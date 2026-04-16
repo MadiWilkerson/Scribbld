@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { AppNavFooter } from '../app/components/AppNavFooter'
 import { MonsterAvatar } from '../app/components/MonsterAvatar'
 import { RectanglePlate } from '../app/components/RectanglePlate'
 import { ASSETS } from './assets'
@@ -134,7 +133,6 @@ export default function ProfileWelcomePage() {
           </div>
         )}
       </div>
-      <AppNavFooter />
     </div>
   )
 }

@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router'
-import { AppNavFooter } from '../app/components/AppNavFooter'
 import { ASSETS } from './assets'
 
 export default function Splash() {
@@ -17,7 +16,6 @@ export default function Splash() {
         <img src={ASSETS.logo} alt="SCRIBBLD" className="h-auto w-[280px] max-w-[90vw] object-contain" />
         <p className="text-center text-lg text-[#0f1027]/80">Tap anywhere to continue</p>
       </div>
-      <AppNavFooter />
     </div>
   )
 }
