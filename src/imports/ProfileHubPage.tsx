@@ -281,7 +281,7 @@ export default function ProfileHubPage() {
             {filteredDrawings.length === 0 ? (
               <p className="col-span-3 text-center text-sm text-[#0f1027]/60">
                 {drawings.length === 0
-                  ? 'No drawings yet — create one from Home.'
+                  ? 'No drawings yet'
                   : 'No drawings for this profile yet.'}
               </p>
             ) : (
