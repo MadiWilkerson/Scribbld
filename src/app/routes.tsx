@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
-import ProfileInputPage from '../imports/ProfileInputPage'
+import ProfileHubPage from '../imports/ProfileHubPage'
 import Profile from '../imports/Profile'
+import ProfileWelcomePage from '../imports/ProfileWelcomePage'
 import HomeFeed from '../imports/HomeFeed'
 import ScribblCreator from '../imports/ScribblCreator'
 import Splash from '../imports/Splash'
@@ -8,10 +9,18 @@ import Splash from '../imports/Splash'
 export const router = createBrowserRouter([
   {
     path: '/',
-    Component: ProfileInputPage,
+    Component: Splash,
+  },
+  {
+    path: '/welcome',
+    Component: ProfileWelcomePage,
   },
   {
     path: '/profile',
+    Component: ProfileHubPage,
+  },
+  {
+    path: '/profile/create',
     Component: Profile,
   },
   {

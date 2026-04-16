@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "chinchilla", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    /* Larger base type (default UA ~16px → ~20px); scales rem-based Tailwind text */
+    font-size: 125%;
+  }
+}
