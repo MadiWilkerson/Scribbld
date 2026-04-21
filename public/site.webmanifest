@@ -1,0 +1,17 @@
+{
+  "name": "SCRIBBLD",
+  "short_name": "SCRIBBLD",
+  "description": "SCRIBBLD — scribble prompts and feed",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fdff",
+  "theme_color": "#b1cfe8",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
