@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppNavFooter } from '../app/components/AppNavFooter'
 import { HeartIcon } from '../app/components/HeartIcon'
 import { MonsterAvatar } from '../app/components/MonsterAvatar'
@@ -100,6 +100,145 @@ function PosterAvatar({
   return <MonsterAvatar config={cfg} size={32} />
 }
 
+/** Card width + `gap-4` (1rem) — must match the horizontal strip layout below. */
+const PROMPT_POST_STRIDE_PX = 312 + 16
+
+function PromptPostsCarousel({
+  promptKey,
+  promptLabel,
+  items,
+  drawings,
+  savedProfiles,
+  likersByDrawing,
+  activeLikerLabel,
+  toggleLike,
+}: {
+  promptKey: string
+  promptLabel: string
+  items: Drawing[]
+  drawings: Drawing[]
+  savedProfiles: SavedProfileRow[]
+  likersByDrawing: Map<number, Set<string>>
+  activeLikerLabel: string
+  toggleLike: (drawingId: number) => void
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const n = items.length
+  const multi = n > 1
+
+  const normalizeScrollLeft = useCallback(() => {
+    const el = scrollRef.current
+    if (!el || !multi) return
+    const cycle = n * PROMPT_POST_STRIDE_PX
+    while (el.scrollLeft >= cycle) {
+      el.scrollLeft -= cycle
+    }
+  }, [multi, n])
+
+  const itemIdsKey = items.map((d) => d.id).join(',')
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTo({ left: 0 })
+  }, [promptKey, itemIdsKey])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || !multi) return
+    const onScroll = () => normalizeScrollLeft()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [multi, normalizeScrollLeft])
+
+  const scrollByDir = (dir: -1 | 1) => {
+    const el = scrollRef.current
+    if (!el || !multi) return
+    normalizeScrollLeft()
+    let sl = el.scrollLeft
+    const cycle = n * PROMPT_POST_STRIDE_PX
+    while (sl >= cycle) sl -= cycle
+    let idx = Math.round(sl / PROMPT_POST_STRIDE_PX)
+    idx = Math.max(0, Math.min(n - 1, idx))
+    idx = (idx + dir + n) % n
+    el.scrollTo({ left: idx * PROMPT_POST_STRIDE_PX, behavior: 'smooth' })
+  }
+
+  const slides = multi ? ([0, 1] as const).flatMap((dup) => items.map((d) => ({ drawing: d, dup }))) : items.map((d) => ({ drawing: d, dup: 0 as const }))
+
+  return (
+    <section className="space-y-2" data-name="prompt-feed-section">
+      <h2 className="px-0.5 font-sans text-lg font-semibold leading-snug text-[#0f1027] line-clamp-4">
+        {promptLabel}
+      </h2>
+      <div className="relative w-full" data-name="prompt-posts-carousel">
+        {multi && (
+          <button
+            type="button"
+            className="absolute left-0 top-[156px] z-20 flex size-10 -translate-x-1 -translate-y-1/2 items-center justify-center rounded-full bg-[#f9fdff]/90 shadow-[0_2px_12px_-2px_rgba(15,16,39,0.25)] ring-1 ring-[#0f1027]/10 transition-opacity hover:opacity-90 active:opacity-80"
+            aria-label="Previous post"
+            onClick={() => scrollByDir(-1)}
+          >
+            <img src={ASSETS.scrollLeft} alt="" className="size-8 max-w-none object-contain" draggable={false} />
+          </button>
+        )}
+        {multi && (
+          <button
+            type="button"
+            className="absolute right-0 top-[156px] z-20 flex size-10 translate-x-1 -translate-y-1/2 items-center justify-center rounded-full bg-[#f9fdff]/90 shadow-[0_2px_12px_-2px_rgba(15,16,39,0.25)] ring-1 ring-[#0f1027]/10 transition-opacity hover:opacity-90 active:opacity-80"
+            aria-label="Next post"
+            onClick={() => scrollByDir(1)}
+          >
+            <img src={ASSETS.scrollRight} alt="" className="size-8 max-w-none object-contain" draggable={false} />
+          </button>
+        )}
+        <div
+          ref={scrollRef}
+          className="flex touch-pan-x gap-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden"
+          data-name="prompt-posts-scroll"
+        >
+          {slides.map(({ drawing, dup }) => (
+            <div
+              key={`${drawing.id}-${dup}`}
+              className="relative w-[312px] shrink-0 snap-start"
+              data-name="post"
+            >
+              <div className="relative bg-white rounded-[31px] size-[312px] overflow-hidden" data-name="postbox">
+                <img
+                  src={drawing.image}
+                  alt="Drawing"
+                  className="absolute inset-[10px] size-[calc(100%-20px)] object-contain rounded-[22px] z-0"
+                />
+                <img
+                  src={ASSETS.square}
+                  alt=""
+                  className="absolute inset-0 size-full object-fill pointer-events-none z-10 rounded-[31px]"
+                />
+              </div>
+              <div className="-mt-3 flex items-center justify-between gap-2">
+                <div className="ml-4 flex min-w-0 flex-1 items-center justify-start gap-1.5">
+                  <PosterAvatar drawing={drawing} savedProfiles={savedProfiles} allDrawings={drawings} />
+                  <span className="max-w-[200px] truncate text-left text-sm text-[#0f1027]">
+                    {displayLabel(drawing.userName)}
+                  </span>
+                </div>
+                <span className="flex shrink-0 -translate-x-1.5 items-center gap-1">
+                  <HeartIcon
+                    filled={likersByDrawing.get(drawing.id)?.has(activeLikerLabel) ?? false}
+                    onClick={() => toggleLike(drawing.id)}
+                  />
+                  <span className="min-w-[1ch] text-sm tabular-nums text-[#0f1027]">
+                    {likersByDrawing.get(drawing.id)?.size ?? 0}
+                  </span>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function HomeFeed() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -146,57 +285,17 @@ export default function HomeFeed() {
         <Header navigate={navigate} />
         <div className="absolute left-[41px] top-[156px] w-[312px] space-y-8 pb-[120px]">
           {promptGroups.map((group) => (
-            <section key={group.promptKey} className="space-y-2" data-name="prompt-feed-section">
-              <h2 className="px-0.5 font-sans text-lg font-semibold leading-snug text-[#0f1027] line-clamp-4">
-                {group.promptLabel}
-              </h2>
-              <div
-                className="flex touch-pan-x gap-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden"
-                data-name="prompt-posts-scroll"
-              >
-                {group.items.map((drawing) => (
-                  <div
-                    key={drawing.id}
-                    className="relative w-[312px] shrink-0 snap-start"
-                    data-name="post"
-                  >
-                    <div className="relative bg-white rounded-[31px] size-[312px] overflow-hidden" data-name="postbox">
-                      <img
-                        src={drawing.image}
-                        alt="Drawing"
-                        className="absolute inset-[10px] size-[calc(100%-20px)] object-contain rounded-[22px] z-0"
-                      />
-                      <img
-                        src={ASSETS.square}
-                        alt=""
-                        className="absolute inset-0 size-full object-fill pointer-events-none z-10 rounded-[31px]"
-                      />
-                    </div>
-                    <div className="-mt-3 flex items-center justify-between gap-2">
-                      <div className="ml-4 flex min-w-0 flex-1 items-center justify-start gap-1.5">
-                        <PosterAvatar
-                          drawing={drawing}
-                          savedProfiles={savedProfiles}
-                          allDrawings={drawings}
-                        />
-                        <span className="max-w-[200px] truncate text-left text-sm text-[#0f1027]">
-                          {displayLabel(drawing.userName)}
-                        </span>
-                      </div>
-                      <span className="flex shrink-0 -translate-x-1.5 items-center gap-1">
-                        <HeartIcon
-                          filled={likersByDrawing.get(drawing.id)?.has(activeLikerLabel) ?? false}
-                          onClick={() => toggleLike(drawing.id)}
-                        />
-                        <span className="min-w-[1ch] text-sm tabular-nums text-[#0f1027]">
-                          {likersByDrawing.get(drawing.id)?.size ?? 0}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <PromptPostsCarousel
+              key={group.promptKey}
+              promptKey={group.promptKey}
+              promptLabel={group.promptLabel}
+              items={group.items}
+              drawings={drawings}
+              savedProfiles={savedProfiles}
+              likersByDrawing={likersByDrawing}
+              activeLikerLabel={activeLikerLabel}
+              toggleLike={toggleLike}
+            />
           ))}
         </div>
         <AppNavFooter />

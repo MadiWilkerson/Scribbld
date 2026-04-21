@@ -22,6 +22,8 @@ export const ASSETS = {
   heart: '/assets/scribbld_Heart.svg',
   heartFilled: '/assets/scribbld_HeartFilled.svg',
   downArrow: '/assets/scribbld_DownArrow.svg',
+  scrollLeft: '/assets/scribbld_LeftArrow.svg',
+  scrollRight: '/assets/scribbld_RightArrow.svg',
   undoArrow: '/assets/scribbld_UndoArrow.svg',
   redoArrow: '/assets/scribbld_RedoArrow.svg',
   /** Frame around scribble creator color swatch */
