@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router'
 import { ASSETS } from './assets'
+import { scribbldCase } from './scribbldType'
 
 export default function Splash() {
   const navigate = useNavigate()
@@ -13,8 +14,8 @@ export default function Splash() {
         role="button"
         tabIndex={0}
       >
-        <img src={ASSETS.logo} alt="SCRIBBLD" className="h-auto w-[280px] max-w-[90vw] object-contain" />
-        <p className="text-center text-lg text-[#0f1027]/80">Tap anywhere to continue</p>
+        <img src={ASSETS.logo} alt={scribbldCase('SCRIBBLD')} className="h-auto w-[280px] max-w-[90vw] object-contain" />
+        <p className="text-center text-lg text-[#0f1027]/80">{scribbldCase('Tap anywhere to continue')}</p>
       </div>
     </div>
   )

@@ -1,3 +1,5 @@
+import { scribbldCase } from './scribbldType'
+
 const STORAGE_PROMPT = 'scribbleCurrentPrompt'
 const STORAGE_STARTED = 'scribblePromptStartedAt'
 const STORAGE_RECENT = 'scribblePromptRecentHistory'
@@ -220,5 +222,5 @@ export function formatScribblePromptTimeLeft(ms: number): string {
   const totalSec = Math.floor(clamped / 1000)
   const m = Math.floor(totalSec / 60)
   const s = totalSec % 60
-  return `${m}:${String(s).padStart(2, '0')} left`
+  return scribbldCase(`${m}:${String(s).padStart(2, '0')} left`)
 }

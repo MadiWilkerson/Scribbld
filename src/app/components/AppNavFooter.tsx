@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router'
 import { ASSETS } from '../../imports/assets'
+import { scribbldCase } from '../../imports/scribbldType'
 
 /** Bottom bar height excluding safe area (matches design footer strip). */
 export const APP_NAV_FOOTER_HEIGHT_PX = 93
@@ -48,7 +49,7 @@ export function AppNavFooter({ onPlusClick }: Props) {
         <button
           type="button"
           className="absolute left-[49px] top-[27px] z-10 size-[63px] cursor-pointer transition-transform hover:scale-105"
-          aria-label="Home feed"
+          aria-label={scribbldCase('Home feed')}
           onClick={() => navigate('/home')}
         >
           <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover" src={homeIcon} />
@@ -56,7 +57,7 @@ export function AppNavFooter({ onPlusClick }: Props) {
         <button
           type="button"
           className="absolute left-[164px] top-[26px] z-10 size-[64px] cursor-pointer transition-transform hover:scale-105"
-          aria-label={onPlusClick ? 'Clear canvas' : 'New scribble'}
+          aria-label={onPlusClick ? scribbldCase('Clear canvas') : scribbldCase('New scribble')}
           onClick={handlePlus}
         >
           <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover" src={centerIcon} />
@@ -64,7 +65,7 @@ export function AppNavFooter({ onPlusClick }: Props) {
         <button
           type="button"
           className="absolute left-[280px] top-[26px] z-10 size-[64px] cursor-pointer transition-transform hover:scale-105"
-          aria-label="Profile"
+          aria-label={scribbldCase('Profile')}
           onClick={() => navigate('/profile')}
         >
           <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover" src={profileIcon} />

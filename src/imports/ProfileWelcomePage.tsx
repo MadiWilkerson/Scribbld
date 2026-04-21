@@ -13,6 +13,7 @@ import {
   resolveMonsterForUser,
   type SavedProfileRow,
 } from './savedProfiles'
+import { scribbldCase } from './scribbldType'
 
 interface Drawing {
   userName?: string
@@ -23,7 +24,7 @@ const USER_NAME_KEY = 'userName'
 const STORAGE_KEY = 'userMonster'
 
 function signInAs(name: string, profiles: SavedProfileRow[], drawings: Drawing[]) {
-  const label = displayLabel(name)
+  const label = scribbldCase(displayLabel(name))
   const fromSaved = profiles.find((p) => displayLabel(p.name) === label)
   localStorage.setItem(USER_NAME_KEY, label)
   if (fromSaved) {
@@ -68,35 +69,35 @@ export default function ProfileWelcomePage() {
           type="button"
           onClick={() => navigate('/splash')}
           className="mb-6 cursor-pointer transition-opacity hover:opacity-90"
-          aria-label="Back to splash"
+          aria-label={scribbldCase('Back to splash')}
         >
-          <img src={ASSETS.logo} alt="SCRIBBLD" className="h-auto w-[200px] object-contain" />
+          <img src={ASSETS.logo} alt={scribbldCase('SCRIBBLD')} className="h-auto w-[200px] object-contain" />
         </button>
 
         <h1 className="mb-1 text-center font-sans text-xl font-semibold text-[#0f1027]">
-          Who&apos;s scribbling?
+          {scribbldCase("Who's scribbling?")}
         </h1>
         <p className="mb-8 max-w-[320px] text-center text-sm text-[#0f1027]/70">
-          Sign in with a profile you&apos;ve used before, or create a new one.
+          {scribbldCase("Sign in with a profile you've used before, or create a new one.")}
         </p>
 
         {profileNames.length === 0 ? (
           <div className="flex w-full max-w-[320px] flex-col items-center gap-6">
-            <p className="text-center text-sm text-[#0f1027]/65">No saved profiles yet.</p>
+            <p className="text-center text-sm text-[#0f1027]/65">{scribbldCase('No saved profiles yet.')}</p>
             <RectanglePlate>
               <button
                 type="button"
                 className="w-full min-h-0 cursor-pointer border-0 bg-transparent py-1 text-center font-sans text-lg font-medium text-[#0f1027] outline-none transition-opacity hover:opacity-90 active:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0f1027]/35 focus-visible:ring-offset-0"
                 onClick={() => navigate('/profile/create', { state: { blankSlate: true } })}
               >
-                Create a profile
+                {scribbldCase('Create a profile')}
               </button>
             </RectanglePlate>
           </div>
         ) : (
           <div className="flex w-full max-w-[320px] flex-col gap-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-[#0f1027]/50">
-              Your profiles
+            <p className="text-xs font-medium tracking-wide text-[#0f1027]/50">
+              {scribbldCase('Your profiles')}
             </p>
             <ul className="flex flex-col gap-2" role="list">
               {profileNames.map((name) => {
@@ -110,7 +111,7 @@ export default function ProfileWelcomePage() {
                     >
                       <MonsterAvatar config={cfg} size={48} />
                       <span className="min-w-0 flex-1 font-sans text-lg font-medium text-[#0f1027]">
-                        {name}
+                        {scribbldCase(name)}
                       </span>
                       <span className="shrink-0 text-sm font-medium text-[#0f1027]/50">→</span>
                     </button>
@@ -126,7 +127,7 @@ export default function ProfileWelcomePage() {
                   className="w-full min-h-0 cursor-pointer border-0 bg-transparent py-1 text-center font-sans text-lg font-medium text-[#0f1027] outline-none transition-opacity hover:opacity-90 active:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0f1027]/35 focus-visible:ring-offset-0"
                   onClick={() => navigate('/profile/create', { state: { blankSlate: true } })}
                 >
-                  Create new profile
+                  {scribbldCase('Create new profile')}
                 </button>
               </RectanglePlate>
             </div>

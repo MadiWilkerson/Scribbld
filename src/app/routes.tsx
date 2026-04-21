@@ -6,7 +6,9 @@ import HomeFeed from '../imports/HomeFeed'
 import ScribblCreator from '../imports/ScribblCreator'
 import Splash from '../imports/Splash'
 
-export const router = createBrowserRouter([
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+const routes = [
   {
     path: '/',
     Component: Splash,
@@ -35,4 +37,8 @@ export const router = createBrowserRouter([
     path: '/splash',
     Component: Splash,
   },
-])
+]
+
+export const router = createBrowserRouter(routes, {
+  basename: basename || undefined,
+})

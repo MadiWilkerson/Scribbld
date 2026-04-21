@@ -24,6 +24,7 @@ import {
   resolveMonsterForUser,
   upsertSavedProfile,
 } from './savedProfiles'
+import { scribbldCase } from './scribbldType'
 
 const STORAGE_KEY = 'userMonster'
 const USER_NAME_KEY = 'userName'
@@ -58,7 +59,7 @@ function FeatureRow({
 }) {
   return (
     <div>
-      <p className="text-sm font-medium text-[#0f1027] mb-2">{label}</p>
+      <p className="text-sm font-medium text-[#0f1027] mb-2">{scribbldCase(label)}</p>
       <div className="grid grid-cols-3 gap-1.5 place-items-center">
         {options.map((n) => (
           <button
@@ -132,7 +133,7 @@ export default function Profile() {
   const setHorn = (horn: MonsterFeature) => persist({ ...config, horn })
 
   const commitName = useCallback(() => {
-    const trimmed = name.trim() || 'Anonymous'
+    const trimmed = scribbldCase(name.trim() || 'Anonymous')
     setName(trimmed)
     if (blankSlate) return
     if (shouldSyncActiveSession(editProfileName)) {
@@ -153,14 +154,14 @@ export default function Profile() {
         <div className="mx-auto flex w-full max-w-[400px] flex-col items-center gap-3">
           <img
             src={ASSETS.logo}
-            alt="SCRIBBLD"
+            alt={scribbldCase('SCRIBBLD')}
             className="h-auto w-[180px] shrink-0 cursor-pointer object-contain"
             onClick={() => navigate('/splash')}
           />
           <div className="flex w-full flex-col items-center gap-0">
             <MonsterAvatar config={config} size={152} />
             <label className="sr-only" htmlFor="profile-display-name">
-              Display name
+              {scribbldCase('Display name')}
             </label>
             <RectanglePlate className="-mt-14">
               <input
@@ -171,7 +172,7 @@ export default function Profile() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onBlur={commitName}
-                placeholder="Your name"
+                placeholder={scribbldCase('Your name')}
                 className="w-full min-h-0 border-0 bg-transparent text-center font-sans text-xl font-medium leading-tight text-[#0f1027] outline-none placeholder:text-[#0f1027]/40 focus-visible:ring-2 focus-visible:ring-[#0f1027]/35 focus-visible:ring-offset-0"
               />
             </RectanglePlate>
@@ -183,7 +184,7 @@ export default function Profile() {
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-[calc(93px+max(1.25rem,env(safe-area-inset-bottom)))] [scrollbar-gutter:stable]">
         <div className={`mx-auto mt-3 flex w-full flex-col gap-6 ${PICKER_COL_WIDTH}`}>
           <div>
-            <p className="text-sm font-medium mb-2">Body shape</p>
+            <p className="text-sm font-medium mb-2">{scribbldCase('Body shape')}</p>
             <div className="grid grid-cols-3 gap-1.5 place-items-center">
               {MONSTER_SHAPES.map((shape) => (
                 <button
@@ -206,7 +207,7 @@ export default function Profile() {
           </div>
 
           <div>
-            <p className="text-sm font-medium mb-2">Color</p>
+            <p className="text-sm font-medium mb-2">{scribbldCase('Color')}</p>
             <div className="grid grid-cols-3 gap-1.5 place-items-center">
               {MONSTER_COLORS.map((color) => (
                 <button
@@ -217,7 +218,7 @@ export default function Profile() {
                     config.color === color ? 'border-[#0f1027] ring-2 ring-[#0f1027]/30' : 'border-[#0f1027]/25'
                   }`}
                   aria-pressed={config.color === color}
-                  title={color}
+                  title={scribbldCase(color)}
                 >
                   <img
                     src={monsterBodyUrl(config.shape, color)}
@@ -240,7 +241,7 @@ export default function Profile() {
               type="button"
               className="w-full min-h-0 cursor-pointer border-0 bg-transparent text-center font-sans text-xl font-medium leading-tight text-[#0f1027] outline-none transition-opacity hover:opacity-90 active:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0f1027]/35 focus-visible:ring-offset-0"
               onClick={() => {
-                const trimmed = name.trim() || 'Anonymous'
+                const trimmed = scribbldCase(name.trim() || 'Anonymous')
                 setName(trimmed)
                 upsertSavedProfile(trimmed, config)
                 localStorage.setItem(PROFILE_HUB_VIEWING_KEY, displayLabel(trimmed))
@@ -251,7 +252,7 @@ export default function Profile() {
                 navigate('/profile')
               }}
             >
-              Done
+              {scribbldCase('Done')}
             </button>
           </RectanglePlate>
         </div>

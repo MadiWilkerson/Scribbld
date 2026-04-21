@@ -1,4 +1,5 @@
 import { ASSETS } from '../../imports/assets'
+import { scribbldCase } from '../../imports/scribbldType'
 
 export function HeartIcon({
   filled,
@@ -12,7 +13,7 @@ export function HeartIcon({
       type="button"
       onClick={onClick}
       className="p-1 rounded-md hover:bg-black/5 transition-colors"
-      aria-label={filled ? 'Unlike' : 'Like'}
+      aria-label={filled ? scribbldCase('Unlike') : scribbldCase('Like')}
     >
       <img
         src={filled ? ASSETS.heartFilled : ASSETS.heart}

@@ -16,6 +16,7 @@ import {
   resolveMonsterForUser,
   type SavedProfileRow,
 } from './savedProfiles'
+import { scribbldCase } from './scribbldType'
 
 function Header({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
@@ -200,14 +201,14 @@ function PromptPostsCarousel({
   return (
     <section className="space-y-2" data-name="prompt-feed-section">
       <h2 className="px-0.5 font-sans text-lg font-semibold leading-snug text-[#0f1027] line-clamp-4">
-        {promptLabel}
+        {scribbldCase(promptLabel)}
       </h2>
       <div className="relative w-[312px] overflow-visible" data-name="prompt-posts-carousel">
         {multi && (
           <button
             type="button"
             className="absolute left-[-22px] top-[156px] z-20 flex -translate-y-1/2 cursor-pointer items-center border-0 bg-transparent p-0 outline-none transition-opacity hover:opacity-80 active:opacity-70 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#0f1027]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9fdff]"
-            aria-label="Previous post"
+            aria-label={scribbldCase('Previous post')}
             onClick={() => scrollByDir(-1)}
           >
             <img src={ASSETS.scrollLeft} alt="" className="size-7 max-w-none object-contain" draggable={false} />
@@ -217,7 +218,7 @@ function PromptPostsCarousel({
           <button
             type="button"
             className="absolute right-[-22px] top-[156px] z-20 flex -translate-y-1/2 cursor-pointer items-center border-0 bg-transparent p-0 outline-none transition-opacity hover:opacity-80 active:opacity-70 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#0f1027]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9fdff]"
-            aria-label="Next post"
+            aria-label={scribbldCase('Next post')}
             onClick={() => scrollByDir(1)}
           >
             <img src={ASSETS.scrollRight} alt="" className="size-7 max-w-none object-contain" draggable={false} />
@@ -237,7 +238,7 @@ function PromptPostsCarousel({
               <div className="relative bg-white rounded-[31px] size-[312px] overflow-hidden" data-name="postbox">
                 <img
                   src={drawing.image}
-                  alt="Drawing"
+                  alt={scribbldCase('Drawing')}
                   className="absolute inset-[10px] size-[calc(100%-20px)] object-contain rounded-[22px] z-0"
                 />
                 <img
@@ -249,9 +250,9 @@ function PromptPostsCarousel({
               <div className="-mt-3 flex items-center justify-between gap-2">
                 <div className="ml-4 flex min-w-0 flex-1 items-center justify-start gap-1.5">
                   <PosterAvatar drawing={drawing} savedProfiles={savedProfiles} allDrawings={drawings} />
-                  <span className="max-w-[200px] truncate text-left text-sm text-[#0f1027]">
-                    {displayLabel(drawing.userName)}
-                  </span>
+                        <span className="max-w-[200px] truncate text-left text-sm text-[#0f1027]">
+                          {scribbldCase(displayLabel(drawing.userName))}
+                        </span>
                 </div>
                 <span className="flex shrink-0 -translate-x-1.5 items-center gap-1">
                   <HeartIcon

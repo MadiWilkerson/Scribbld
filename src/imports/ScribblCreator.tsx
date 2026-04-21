@@ -9,6 +9,7 @@ import {
 import { parseMonsterConfig, stringifyMonsterConfig } from './monsterConfig'
 import { getActiveUserForLikes } from './likeStorage'
 import { loadSavedProfiles, resolveMonsterForUser, upsertSavedProfile } from './savedProfiles'
+import { scribbldCase } from './scribbldType'
 
 /** Persisted until the user clears the canvas or posts (see ScribblCreator). */
 const SCRIBBL_DRAFT_KEY = 'scribblCanvasDraft'
@@ -424,7 +425,7 @@ function Drawing({
             className="relative size-7 shrink-0 overflow-visible outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-[#0f1027]/35"
             aria-expanded={spectrumOpen}
             aria-haspopup="dialog"
-            aria-label="Choose color"
+            aria-label={scribbldCase('Choose color')}
             onClick={(e) => {
               e.stopPropagation()
               setSpectrumOpen((o) => !o)
@@ -446,7 +447,7 @@ function Drawing({
             <button
               type="button"
               className="-ml-1 relative -left-1 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-transform hover:scale-105 active:scale-95"
-              aria-label="Switch to eraser"
+              aria-label={scribbldCase('Switch to eraser')}
               data-name="tool-eraser"
               onClick={() => setDrawingMode('eraser')}
             >
@@ -458,7 +459,7 @@ function Drawing({
             <button
               type="button"
               className="-ml-1 relative -left-1 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-transform hover:scale-105 active:scale-95"
-              aria-label="Switch to pencil"
+              aria-label={scribbldCase('Switch to pencil')}
               data-name="tool-pencil"
               onClick={() => setDrawingMode('pen')}
             >
@@ -468,7 +469,7 @@ function Drawing({
           <button
             type="button"
             className="-ml-1 relative -left-1.5 flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-transform hover:scale-105 active:scale-95"
-            aria-label="Fill enclosed area with selected color — then tap the drawing"
+            aria-label={scribbldCase('Fill enclosed area with selected color — then tap the drawing')}
             data-name="tool-fill"
             onClick={(e) => {
               e.stopPropagation()
@@ -481,7 +482,7 @@ function Drawing({
             <div
               className="absolute bottom-[calc(100%+8px)] left-0 z-[100] flex w-[min(210px,calc(100vw-2rem))] flex-col items-center gap-2 rounded-2xl border border-[#0f1027]/15 bg-[#f9fdff] p-2 shadow-xl"
               role="dialog"
-              aria-label="Color spectrum"
+              aria-label={scribbldCase('Color spectrum')}
             >
               <canvas
                 ref={wheelRef}
@@ -513,7 +514,7 @@ function Drawing({
                 className="relative h-[26px] w-full max-w-[210px] shrink-0 cursor-ew-resize touch-none rounded-lg border border-[#0f1027]/20"
                 style={{ background: valueStripGradient }}
                 role="slider"
-                aria-label="Brightness"
+                aria-label={scribbldCase('Brightness')}
                 aria-orientation="horizontal"
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -542,8 +543,8 @@ function Drawing({
                 <button
                   type="button"
                   className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-[#0f1027]/20 bg-white text-[#0f1027] shadow-sm transition-transform hover:scale-105 hover:border-[#0f1027]/35 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f1027]/40"
-                  aria-label="Pick color from screen"
-                  title="Eyedropper — sample a color from anywhere on screen"
+                  aria-label={scribbldCase('Pick color from screen')}
+                  title={scribbldCase('Eyedropper — sample a color from anywhere on screen')}
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
@@ -580,7 +581,7 @@ function Drawing({
               className={`flex size-11 shrink-0 items-center justify-center rounded-lg transition-opacity ${
                 canUndo ? 'cursor-pointer hover:opacity-80 active:opacity-70' : 'cursor-not-allowed opacity-35'
               }`}
-              aria-label="Undo last stroke"
+              aria-label={scribbldCase('Undo last stroke')}
               disabled={!canUndo}
               onClick={undo}
             >
@@ -591,7 +592,7 @@ function Drawing({
               className={`relative left-1 flex size-11 shrink-0 items-center justify-center rounded-lg transition-opacity ${
                 canRedo ? 'cursor-pointer hover:opacity-80 active:opacity-70' : 'cursor-not-allowed opacity-35'
               }`}
-              aria-label="Redo"
+              aria-label={scribbldCase('Redo')}
               disabled={!canRedo}
               onClick={redo}
             >
@@ -612,7 +613,7 @@ function Drawing({
             aria-hidden
           />
           <span className="relative z-10 flex h-full w-full translate-y-px items-center justify-center font-sans text-sm font-semibold text-[#0f1027]">
-            Post
+            {scribbldCase('Post')}
           </span>
         </button>
       </div>
@@ -624,7 +625,7 @@ function Drawing({
           ref={sizeTrackRef}
           className="relative flex h-10 w-[300px] max-w-full shrink-0 cursor-pointer touch-manipulation select-none items-center"
           role="slider"
-          aria-label="Brush size"
+          aria-label={scribbldCase('Brush size')}
           aria-valuemin={1}
           aria-valuemax={10}
           aria-valuenow={penSize}
@@ -955,9 +956,9 @@ export default function ScribblCreator() {
           <p
             className="line-clamp-2 max-w-full font-sans text-xl font-semibold leading-snug text-[#0f1027]"
             data-name="drawing-prompt"
-            title={session.text}
+            title={scribbldCase(session.text)}
           >
-            {session.text}
+            {scribbldCase(session.text)}
           </p>
         </div>
         <Drawing

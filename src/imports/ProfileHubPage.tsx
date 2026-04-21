@@ -17,6 +17,7 @@ import {
   resolveMonsterForUser,
   upsertSavedProfile,
 } from './savedProfiles'
+import { scribbldCase } from './scribbldType'
 
 const STORAGE_KEY = 'userMonster'
 const USER_NAME_KEY = 'userName'
@@ -188,7 +189,7 @@ export default function ProfileHubPage() {
               type="button"
               className="shrink-0 cursor-pointer"
               onClick={() => navigate('/splash')}
-              aria-label="SCRIBBLD — splash"
+              aria-label={scribbldCase('SCRIBBLD — splash')}
             >
               <img src={ASSETS.logo} alt="" className="h-auto w-[180px] object-contain" />
             </button>
@@ -198,7 +199,7 @@ export default function ProfileHubPage() {
             <button
               type="button"
               className="cursor-pointer rounded-full border-0 bg-transparent p-0 ring-2 ring-transparent transition duration-200 ease-out hover:scale-[1.04] hover:ring-[#0f1027]/25 hover:shadow-[0_10px_28px_-12px_rgba(15,16,39,0.35)] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f1027]/35"
-              aria-label="Edit avatar"
+              aria-label={scribbldCase('Edit avatar')}
               onClick={() =>
                 navigate('/profile/create', { state: { editProfileName: viewingName } })
               }
@@ -212,14 +213,14 @@ export default function ProfileHubPage() {
               <div className="flex w-full justify-center">
                 <div className="inline-flex w-auto max-w-full min-w-0 items-center gap-1.5">
                   <span className="min-w-0 text-center font-sans text-lg font-medium leading-tight text-[#0f1027] break-words">
-                    {viewingName}
+                    {scribbldCase(viewingName)}
                   </span>
                   <button
                     type="button"
                     className="shrink-0 rounded-md p-0.5 transition-transform hover:bg-[#0f1027]/5"
                     aria-expanded={dropdownOpen}
                     aria-haspopup="listbox"
-                    aria-label="Past profiles"
+                    aria-label={scribbldCase('Past profiles')}
                     onClick={() => setDropdownOpen((o) => !o)}
                   >
                     <img
@@ -256,13 +257,13 @@ export default function ProfileHubPage() {
                           setDropdownOpen(false)
                         }}
                       >
-                        {name}
+                        {scribbldCase(name)}
                       </button>
                       <button
                         type="button"
                         className="flex w-9 shrink-0 cursor-pointer items-center justify-center rounded-md opacity-100 transition-opacity [pointer-fine]:opacity-0 [pointer-fine]:group-hover:opacity-100 hover:bg-[#0f1027]/10"
-                        aria-label={`Remove ${name}`}
-                        title="Remove profile"
+                        aria-label={scribbldCase(`Remove ${name}`)}
+                        title={scribbldCase('Remove profile')}
                         onClick={(e) => deleteProfileFromList(name, e)}
                       >
                         <img src={ASSETS.exit} alt="" className="size-4 object-contain opacity-80" />
@@ -278,20 +279,22 @@ export default function ProfileHubPage() {
                 className="w-full min-h-0 cursor-pointer border-0 bg-transparent text-center font-sans text-base font-medium leading-tight text-[#0f1027] outline-none transition-opacity hover:opacity-90 active:opacity-80 focus-visible:ring-2 focus-visible:ring-[#0f1027]/35 focus-visible:ring-offset-0"
                 onClick={() => navigate('/profile/create', { state: { blankSlate: true } })}
               >
-                Add profile
+                {scribbldCase('Add profile')}
               </button>
             </RectanglePlate>
           </div>
         </div>
 
         <div className="mt-2">
-          <p className="mb-2 text-center text-sm font-medium text-[#0f1027]">Your drawings</p>
+          <p className="mb-2 text-center text-sm font-medium text-[#0f1027]">
+            {scribbldCase('Your drawings')}
+          </p>
           <div className="grid grid-cols-3 gap-2 pb-2">
             {filteredDrawings.length === 0 ? (
               <p className="col-span-3 text-center text-sm text-[#0f1027]/60">
                 {drawings.length === 0
-                  ? 'No drawings yet'
-                  : 'No drawings for this profile yet.'}
+                  ? scribbldCase('No drawings yet')
+                  : scribbldCase('No drawings for this profile yet.')}
               </p>
             ) : (
               filteredDrawings.map((drawing) => (
@@ -318,7 +321,7 @@ export default function ProfileHubPage() {
                   <button
                     type="button"
                     className="absolute inset-0 z-20 cursor-pointer rounded-[14px] border-0 bg-transparent"
-                    aria-label="View drawing prompt"
+                    aria-label={scribbldCase('View drawing prompt')}
                     onClick={() => setPromptForDrawing(drawing)}
                   />
                   {hoveredDrawing === drawing.id && (
@@ -329,7 +332,7 @@ export default function ProfileHubPage() {
                         e.stopPropagation()
                         deleteDrawing(drawing.id)
                       }}
-                      aria-label="Delete drawing"
+                      aria-label={scribbldCase('Delete drawing')}
                     >
                       <img alt="" className="absolute inset-0 size-full max-w-none object-cover" src={ASSETS.exit} />
                     </button>
@@ -354,17 +357,19 @@ export default function ProfileHubPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="profile-prompt-heading" className="font-sans text-sm font-medium text-[#0f1027]/70">
-              Prompt
+              {scribbldCase('Prompt')}
             </h2>
             <p className="mt-3 font-sans text-lg leading-snug text-[#0f1027]">
-              {promptForDrawing.prompt?.trim() || 'No prompt was saved for this drawing.'}
+              {scribbldCase(
+                promptForDrawing.prompt?.trim() || 'No prompt was saved for this drawing.',
+              )}
             </p>
             <button
               type="button"
               className="mt-5 w-full rounded-xl border-2 border-[#0f1027] bg-[#f9fdff] py-2.5 font-sans text-sm font-medium text-[#0f1027] transition-opacity hover:opacity-90"
               onClick={() => setPromptForDrawing(null)}
             >
-              Close
+              {scribbldCase('Close')}
             </button>
           </div>
         </div>
