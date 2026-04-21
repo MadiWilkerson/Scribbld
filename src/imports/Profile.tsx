@@ -4,6 +4,7 @@ import { AppNavFooter } from '../app/components/AppNavFooter'
 import { MonsterAvatar } from '../app/components/MonsterAvatar'
 import { RectanglePlate } from '../app/components/RectanglePlate'
 import { ASSETS } from './assets'
+import { useAuth } from './authContext'
 import {
   DEFAULT_MONSTER,
   MONSTER_COLORS,
@@ -25,6 +26,7 @@ import {
   upsertSavedProfile,
 } from './savedProfiles'
 import { scribbldCase } from './scribbldType'
+import { fetchDrawingsFeed, fetchProfilesForUser, upsertProfileCloud } from './supabaseApi'
 
 const STORAGE_KEY = 'userMonster'
 const USER_NAME_KEY = 'userName'
@@ -82,6 +84,7 @@ function FeatureRow({
 export default function Profile() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { isCloud, user, ready } = useAuth()
   const state = location.state as ProfileLocationState | null
   const blankSlate = Boolean(state?.blankSlate)
   const editProfileName = state?.editProfileName
@@ -99,10 +102,23 @@ export default function Profile() {
     if (s?.editProfileName) {
       const label = displayLabel(s.editProfileName)
       setName(label)
-      const profiles = loadSavedProfiles()
-      const rawD = localStorage.getItem(DRAWINGS_KEY)
-      const drawingsList = rawD ? JSON.parse(rawD) : []
-      setConfig(resolveMonsterForUser(label, profiles, drawingsList))
+
+      const load = async () => {
+        let profiles = loadSavedProfiles()
+        let drawingsList: { userName?: string; userMonster?: string }[] = []
+        if (isCloud && user && ready) {
+          ;[profiles, drawingsList] = await Promise.all([
+            fetchProfilesForUser(user.id),
+            fetchDrawingsFeed(user.id),
+          ])
+        } else {
+          const rawD = localStorage.getItem(DRAWINGS_KEY)
+          drawingsList = rawD ? JSON.parse(rawD) : []
+        }
+        setConfig(resolveMonsterForUser(label, profiles, drawingsList))
+      }
+
+      void load()
       return
     }
     setName(localStorage.getItem(USER_NAME_KEY) || 'Anonymous')
@@ -113,7 +129,7 @@ export default function Profile() {
     } else if (raw && (raw.startsWith('data:') || raw.startsWith('http'))) {
       setConfig(DEFAULT_MONSTER)
     }
-  }, [location.key, location.state])
+  }, [location.key, location.state, isCloud, user?.id, ready])
 
   const persist = useCallback(
     (next: MonsterConfig) => {
@@ -244,6 +260,9 @@ export default function Profile() {
                 const trimmed = scribbldCase(name.trim() || 'Anonymous')
                 setName(trimmed)
                 upsertSavedProfile(trimmed, config)
+                if (isCloud && user) {
+                  void upsertProfileCloud(user.id, trimmed, stringifyMonsterConfig(config))
+                }
                 localStorage.setItem(PROFILE_HUB_VIEWING_KEY, displayLabel(trimmed))
                 if (blankSlate || shouldSyncActiveSession(editProfileName)) {
                   localStorage.setItem(USER_NAME_KEY, trimmed)

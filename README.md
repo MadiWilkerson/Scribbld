@@ -11,6 +11,16 @@ npm run dev
 
 Open the URL Vite prints (usually `http://localhost:5173/`). Use in-app navigation, or open routes directly (for example `/home`, `/create`); the dev server supports SPA history routing.
 
+### Supabase (optional shared feed)
+
+Without env vars, drawings and profiles stay on the device (`localStorage`). To sync the feed, likes, and profiles across devices:
+
+1. Create a [Supabase](https://supabase.com) project (free tier is enough).
+2. In **Authentication → Providers**, enable **Anonymous** sign-in.
+3. In the SQL editor, run `supabase/migrations/001_initial.sql` (tables, RLS, storage bucket `drawing-images`).
+4. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from **Project Settings → API**.
+5. On **Vercel** (or your host), add the same two variables to the project environment and redeploy.
+
 To test the production build locally:
 
 ```bash
@@ -26,7 +36,7 @@ GitHub is the source of truth; **Vercel builds and hosts** the site when you pus
 2. Leave the defaults: **Framework Preset** should detect **Vite**, **Build Command** `npm run build`, **Output Directory** `dist`.
 3. Deploy. Routes like `/home` and `/create` work on refresh because **`vercel.json`** rewrites unknown paths to `index.html` (see [Vite SPAs on Vercel](https://vercel.com/docs/frameworks/vite#using-vite-to-make-spas)).
 
-For a normal Vercel URL or custom domain at the **root** (`https://your-app.vercel.app/`), you do **not** need `VITE_BASE`. Only set `VITE_BASE` if the app is served from a **subpath** (uncommon on Vercel).
+For a normal Vercel URL or custom domain at the **root** (`https://your-app.vercel.app/`), you do **not** need `VITE_BASE`. Only set `VITE_BASE` if the app is served from a **subpath** (uncommon on Vercel). Add `VITE_SUPABASE_*` here as well if you use Supabase.
 
 ### Other hosts (optional)
 

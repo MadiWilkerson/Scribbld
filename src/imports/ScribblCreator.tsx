@@ -7,9 +7,13 @@ import {
   getActivePromptSession,
 } from './drawingPrompts'
 import { parseMonsterConfig, stringifyMonsterConfig } from './monsterConfig'
+import { useAuth } from './authContext'
 import { getActiveUserForLikes } from './likeStorage'
+import { loadLegacyDrawingsFromStorage, saveLegacyDrawingsToStorage } from './legacyDrawings'
 import { loadSavedProfiles, resolveMonsterForUser, upsertSavedProfile } from './savedProfiles'
 import { scribbldCase } from './scribbldType'
+import { isSupabaseConfigured } from './supabaseClient'
+import { fetchDrawingsFeed, fetchProfilesForUser, insertDrawing, upsertProfileCloud } from './supabaseApi'
 
 /** Persisted until the user clears the canvas or posts (see ScribblCreator). */
 const SCRIBBL_DRAFT_KEY = 'scribblCanvasDraft'
@@ -676,6 +680,7 @@ function Drawing({
 
 export default function ScribblCreator() {
   const navigate = useNavigate()
+  const { isCloud, user, ready } = useAuth()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
   const [drawingMode, setDrawingMode] = useState<'pen' | 'eraser'>('pen')
@@ -897,39 +902,76 @@ export default function ScribblCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const drawingData = canvas.toDataURL('image/png')
-    const userName = getActiveUserForLikes()
-    const existingDrawings = localStorage.getItem('drawings')
-    const priorDrawings = existingDrawings ? JSON.parse(existingDrawings) : []
-    const savedProfiles = loadSavedProfiles()
-    const monsterConfig = resolveMonsterForUser(userName, savedProfiles, priorDrawings)
-    const userMonster = stringifyMonsterConfig(monsterConfig)
+    const run = async () => {
+      if (isSupabaseConfigured && (!ready || !user)) {
+        return
+      }
 
-    const drawings = [...priorDrawings]
+      const drawingData = canvas.toDataURL('image/png')
+      const userName = getActiveUserForLikes()
 
-    drawings.unshift({
-      id: Date.now(),
-      image: drawingData,
-      timestamp: new Date().toISOString(),
-      userName: userName,
-      userMonster: userMonster,
-      prompt: session.text,
-    })
+      if (isCloud && user) {
+        const [priorDrawings, savedProfiles] = await Promise.all([
+          fetchDrawingsFeed(user.id),
+          fetchProfilesForUser(user.id),
+        ])
+        const monsterConfig = resolveMonsterForUser(userName, savedProfiles, priorDrawings)
+        const userMonster = stringifyMonsterConfig(monsterConfig)
 
-    localStorage.setItem('drawings', JSON.stringify(drawings))
+        const res = await insertDrawing({
+          userId: user.id,
+          authorDisplayName: userName,
+          monsterJson: userMonster,
+          promptText: session.text,
+          pngDataUrl: drawingData,
+        })
 
-    try {
-      localStorage.removeItem(SCRIBBL_DRAFT_KEY)
-    } catch {
-      /* ignore */
+        if (!res.ok) {
+          console.error(res.error ?? 'Failed to post drawing')
+          return
+        }
+
+        const mc = parseMonsterConfig(userMonster)
+        if (mc) {
+          upsertSavedProfile(userName, mc)
+          void upsertProfileCloud(user.id, userName, userMonster)
+        }
+      } else {
+        const priorDrawings = loadLegacyDrawingsFromStorage()
+        const savedProfiles = loadSavedProfiles()
+        const monsterConfig = resolveMonsterForUser(userName, savedProfiles, priorDrawings)
+        const userMonster = stringifyMonsterConfig(monsterConfig)
+
+        const drawings = [
+          {
+            id: crypto.randomUUID(),
+            image: drawingData,
+            timestamp: new Date().toISOString(),
+            userName,
+            userMonster,
+            prompt: session.text,
+          },
+          ...priorDrawings,
+        ]
+
+        saveLegacyDrawingsToStorage(drawings)
+
+        const mc = parseMonsterConfig(userMonster)
+        if (mc) {
+          upsertSavedProfile(userName, mc)
+        }
+      }
+
+      try {
+        localStorage.removeItem(SCRIBBL_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
+
+      navigate('/home')
     }
 
-    const mc = parseMonsterConfig(userMonster)
-    if (mc) {
-      upsertSavedProfile(userName, mc)
-    }
-
-    navigate('/home')
+    void run()
   }
 
   const canUndo = useMemo(() => historyIndexRef.current > 0, [historyStamp])

@@ -4,9 +4,12 @@ import { AppNavFooter } from '../app/components/AppNavFooter'
 import { MonsterAvatar } from '../app/components/MonsterAvatar'
 import { RectanglePlate } from '../app/components/RectanglePlate'
 import { ASSETS } from './assets'
-import { parseMonsterConfig } from './monsterConfig'
-import type { SavedProfileRow } from './savedProfiles'
+import { useAuth } from './authContext'
+import type { Drawing } from './drawingRecord'
+import { parseMonsterConfig, stringifyMonsterConfig } from './monsterConfig'
+import { loadLegacyDrawingsFromStorage, saveLegacyDrawingsToStorage } from './legacyDrawings'
 import { removeDrawingIdFromLikes, removeDrawingIdsFromLikes } from './likeStorage'
+import type { SavedProfileRow } from './savedProfiles'
 import {
   collectUserNamesFromDrawings,
   displayLabel,
@@ -18,24 +21,23 @@ import {
   upsertSavedProfile,
 } from './savedProfiles'
 import { scribbldCase } from './scribbldType'
+import {
+  deleteDrawing as deleteDrawingCloud,
+  deleteDrawingsByAuthorLabel,
+  deleteProfileCloud,
+  fetchDrawingsFeed,
+  fetchProfilesForUser,
+  upsertProfileCloud,
+} from './supabaseApi'
 
 const STORAGE_KEY = 'userMonster'
 const USER_NAME_KEY = 'userName'
-const DRAWINGS_KEY = 'drawings'
-
-interface Drawing {
-  id: number
-  image: string
-  timestamp: string
-  userName?: string
-  userMonster?: string
-  prompt?: string
-}
 
 export default function ProfileHubPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const nameMenuRef = useRef<HTMLDivElement>(null)
+  const { isCloud, user, ready } = useAuth()
 
   const [savedProfiles, setSavedProfiles] = useState<SavedProfileRow[]>([])
   const [viewingName, setViewingName] = useState(() =>
@@ -45,25 +47,45 @@ export default function ProfileHubPage() {
   )
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [drawings, setDrawings] = useState<Drawing[]>([])
-  const [hoveredDrawing, setHoveredDrawing] = useState<number | null>(null)
+  const [hoveredDrawing, setHoveredDrawing] = useState<string | null>(null)
   const [promptForDrawing, setPromptForDrawing] = useState<Drawing | null>(null)
 
   useEffect(() => {
-    let profiles = loadSavedProfiles()
-    if (profiles.length === 0) {
-      const n = localStorage.getItem(USER_NAME_KEY) || 'Anonymous'
-      const rawM = localStorage.getItem(STORAGE_KEY)
-      const p = parseMonsterConfig(rawM)
-      if (p) {
-        upsertSavedProfile(n, p)
-        profiles = loadSavedProfiles()
+    if (!ready) return
+
+    const run = async () => {
+      if (isCloud && user) {
+        let profiles = await fetchProfilesForUser(user.id)
+        if (profiles.length === 0) {
+          const n = localStorage.getItem(USER_NAME_KEY) || 'Anonymous'
+          const rawM = localStorage.getItem(STORAGE_KEY)
+          const p = parseMonsterConfig(rawM)
+          if (p) {
+            upsertSavedProfile(n, p)
+            await upsertProfileCloud(user.id, displayLabel(n), stringifyMonsterConfig(p))
+            profiles = await fetchProfilesForUser(user.id)
+          }
+        }
+        setSavedProfiles(profiles)
+        setDrawings(await fetchDrawingsFeed(user.id))
+      } else {
+        let profiles = loadSavedProfiles()
+        if (profiles.length === 0) {
+          const n = localStorage.getItem(USER_NAME_KEY) || 'Anonymous'
+          const rawM = localStorage.getItem(STORAGE_KEY)
+          const p = parseMonsterConfig(rawM)
+          if (p) {
+            upsertSavedProfile(n, p)
+            profiles = loadSavedProfiles()
+          }
+        }
+        setSavedProfiles(profiles)
+        setDrawings(loadLegacyDrawingsFromStorage())
       }
     }
-    setSavedProfiles(profiles)
 
-    const savedDrawings = localStorage.getItem(DRAWINGS_KEY)
-    setDrawings(savedDrawings ? JSON.parse(savedDrawings) : [])
-  }, [location.pathname])
+    void run()
+  }, [location.pathname, ready, isCloud, user?.id])
 
   useEffect(() => {
     localStorage.setItem(PROFILE_HUB_VIEWING_KEY, viewingName)
@@ -136,32 +158,59 @@ export default function ProfileHubPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [dropdownOpen])
 
-  const deleteDrawing = (drawingId: number) => {
-    setPromptForDrawing((current) => (current?.id === drawingId ? null : current))
-    const updated = drawings.filter((d) => d.id !== drawingId)
-    setDrawings(updated)
-    localStorage.setItem(DRAWINGS_KEY, JSON.stringify(updated))
-    removeDrawingIdFromLikes(drawingId)
+  const deleteDrawing = async (drawingId: string) => {
+    const sid = String(drawingId)
+    setPromptForDrawing((current) => (current?.id === sid ? null : current))
+    if (isCloud && user) {
+      await deleteDrawingCloud(user.id, sid)
+      setDrawings((prev) => prev.filter((d) => d.id !== sid))
+    } else {
+      const updated = drawings.filter((d) => d.id !== sid)
+      setDrawings(updated)
+      saveLegacyDrawingsToStorage(updated)
+      removeDrawingIdFromLikes(sid)
+    }
   }
 
-  const deleteProfileFromList = (profileName: string, e: ReactMouseEvent<HTMLButtonElement>) => {
+  const deleteProfileFromList = async (profileName: string, e: ReactMouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
     const label = displayLabel(profileName)
 
+    if (isCloud && user) {
+      await deleteProfileCloud(user.id, label)
+      await deleteDrawingsByAuthorLabel(user.id, label)
+      const nextProfiles = await fetchProfilesForUser(user.id)
+      const nextDrawings = await fetchDrawingsFeed(user.id)
+      setSavedProfiles(nextProfiles)
+      setDrawings(nextDrawings)
+
+      if (displayLabel(localStorage.getItem(USER_NAME_KEY) || '') === label) {
+        localStorage.removeItem(USER_NAME_KEY)
+        localStorage.removeItem(STORAGE_KEY)
+      }
+
+      if (displayLabel(viewingName) === label) {
+        const drawingNames = collectUserNamesFromDrawings(nextDrawings)
+        const remaining = mergedUserList(nextProfiles, drawingNames)
+        setViewingName(displayLabel(remaining[0] ?? 'Anonymous'))
+      }
+      return
+    }
+
     const nextProfiles = removeSavedProfileByName(profileName)
     setSavedProfiles(nextProfiles)
 
-    const removedIds = new Set<number>()
+    const removedIds = new Set<string>()
     const nextDrawings = drawings.filter((d) => {
       if (displayLabel(d.userName) === label) {
-        removedIds.add(d.id)
+        removedIds.add(String(d.id))
         return false
       }
       return true
     })
     setDrawings(nextDrawings)
-    localStorage.setItem(DRAWINGS_KEY, JSON.stringify(nextDrawings))
+    saveLegacyDrawingsToStorage(nextDrawings)
     removeDrawingIdsFromLikes(removedIds)
 
     if (displayLabel(localStorage.getItem(USER_NAME_KEY) || '') === label) {
@@ -264,7 +313,7 @@ export default function ProfileHubPage() {
                         className="flex w-9 shrink-0 cursor-pointer items-center justify-center rounded-md opacity-100 transition-opacity [pointer-fine]:opacity-0 [pointer-fine]:group-hover:opacity-100 hover:bg-[#0f1027]/10"
                         aria-label={scribbldCase(`Remove ${name}`)}
                         title={scribbldCase('Remove profile')}
-                        onClick={(e) => deleteProfileFromList(name, e)}
+                        onClick={(e) => void deleteProfileFromList(name, e)}
                       >
                         <img src={ASSETS.exit} alt="" className="size-4 object-contain opacity-80" />
                       </button>
@@ -330,7 +379,7 @@ export default function ProfileHubPage() {
                       className="absolute right-1 top-1 z-30 size-8 cursor-pointer transition-transform hover:scale-105"
                       onClick={(e) => {
                         e.stopPropagation()
-                        deleteDrawing(drawing.id)
+                        void deleteDrawing(drawing.id)
                       }}
                       aria-label={scribbldCase('Delete drawing')}
                     >

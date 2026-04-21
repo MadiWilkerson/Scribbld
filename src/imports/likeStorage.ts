@@ -20,26 +20,30 @@ export function getActiveUserForLikes(): string {
   return displayLabel((hub || session) ?? undefined)
 }
 
-function readLegacyLikedIds(): Set<number> {
+function readLegacyLikedIds(): Set<string> {
   try {
     const raw = localStorage.getItem(LIKED_DRAWING_IDS_KEY)
     if (!raw) return new Set()
     const arr = JSON.parse(raw) as number[]
-    return new Set(Array.isArray(arr) ? arr : [])
+    const s = new Set<string>()
+    for (const n of Array.isArray(arr) ? arr : []) {
+      s.add(String(n))
+    }
+    return s
   } catch {
     return new Set()
   }
 }
 
-function readLegacyLikeCounts(): Map<number, number> {
+function readLegacyLikeCounts(): Map<string, number> {
   try {
     const raw = localStorage.getItem(DRAWING_LIKE_COUNTS_KEY)
     if (!raw) return new Map()
     const o = JSON.parse(raw) as Record<string, number>
-    const m = new Map<number, number>()
+    const m = new Map<string, number>()
     for (const [k, v] of Object.entries(o)) {
-      const id = Number(k)
-      if (!Number.isFinite(id) || typeof v !== 'number') continue
+      const id = String(k)
+      if (typeof v !== 'number') continue
       const n = Math.max(0, Math.floor(v))
       if (n > 0) m.set(id, n)
     }
@@ -49,15 +53,15 @@ function readLegacyLikeCounts(): Map<number, number> {
   }
 }
 
-export function readDrawingLikers(): Map<number, Set<string>> {
+export function readDrawingLikers(): Map<string, Set<string>> {
   try {
     const raw = localStorage.getItem(DRAWING_LIKERS_BY_USER_KEY)
     if (!raw) return new Map()
     const o = JSON.parse(raw) as Record<string, string[]>
-    const m = new Map<number, Set<string>>()
+    const m = new Map<string, Set<string>>()
     for (const [k, arr] of Object.entries(o)) {
-      const id = Number(k)
-      if (!Number.isFinite(id) || !Array.isArray(arr)) continue
+      const id = String(k)
+      if (!Array.isArray(arr)) continue
       const set = new Set<string>()
       for (const name of arr) {
         const l = displayLabel(name)
@@ -71,7 +75,7 @@ export function readDrawingLikers(): Map<number, Set<string>> {
   }
 }
 
-export function writeDrawingLikers(m: Map<number, Set<string>>): void {
+export function writeDrawingLikers(m: Map<string, Set<string>>): void {
   const o: Record<string, string[]> = {}
   for (const [id, set] of m) {
     if (set.size > 0) o[String(id)] = [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
@@ -83,7 +87,7 @@ export function writeDrawingLikers(m: Map<number, Set<string>>): void {
  * Load per-user likers, or migrate once from legacy single-device liked ids / counts
  * (each old like becomes one entry for the current session user label).
  */
-export function loadOrMigrateDrawingLikers(): Map<number, Set<string>> {
+export function loadOrMigrateDrawingLikers(): Map<string, Set<string>> {
   const existing = readDrawingLikers()
   if (existing.size > 0) return existing
 
@@ -91,8 +95,8 @@ export function loadOrMigrateDrawingLikers(): Map<number, Set<string>> {
   const legacyCounts = readLegacyLikeCounts()
   const user = displayLabel(localStorage.getItem(USER_NAME_KEY) ?? undefined)
 
-  const allIds = new Set<number>([...legacyIds, ...legacyCounts.keys()])
-  const m = new Map<number, Set<string>>()
+  const allIds = new Set<string>([...legacyIds, ...legacyCounts.keys()])
+  const m = new Map<string, Set<string>>()
   for (const id of allIds) {
     m.set(id, new Set([user]))
   }
@@ -106,15 +110,15 @@ export function loadOrMigrateDrawingLikers(): Map<number, Set<string>> {
   return readDrawingLikers()
 }
 
-export function removeDrawingIdFromLikes(drawingId: number): void {
+export function removeDrawingIdFromLikes(drawingId: string): void {
   const m = readDrawingLikers()
-  m.delete(drawingId)
+  m.delete(String(drawingId))
   writeDrawingLikers(m)
 }
 
-export function removeDrawingIdsFromLikes(removed: Set<number>): void {
+export function removeDrawingIdsFromLikes(removed: Set<string>): void {
   if (removed.size === 0) return
   const m = readDrawingLikers()
-  for (const id of removed) m.delete(id)
+  for (const id of removed) m.delete(String(id))
   writeDrawingLikers(m)
 }

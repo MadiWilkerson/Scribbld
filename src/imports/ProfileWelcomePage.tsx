@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { MonsterAvatar } from '../app/components/MonsterAvatar'
 import { RectanglePlate } from '../app/components/RectanglePlate'
 import { ASSETS } from './assets'
+import { useAuth } from './authContext'
+import type { Drawing } from './drawingRecord'
+import { loadLegacyDrawingsFromStorage } from './legacyDrawings'
 import { stringifyMonsterConfig } from './monsterConfig'
 import {
   collectUserNamesFromDrawings,
@@ -14,11 +17,7 @@ import {
   type SavedProfileRow,
 } from './savedProfiles'
 import { scribbldCase } from './scribbldType'
-
-interface Drawing {
-  userName?: string
-  userMonster?: string
-}
+import { fetchDrawingsFeed, fetchProfilesForUser } from './supabaseApi'
 
 const USER_NAME_KEY = 'userName'
 const STORAGE_KEY = 'userMonster'
@@ -38,14 +37,29 @@ function signInAs(name: string, profiles: SavedProfileRow[], drawings: Drawing[]
 
 export default function ProfileWelcomePage() {
   const navigate = useNavigate()
+  const { isCloud, user, ready } = useAuth()
   const [savedProfiles, setSavedProfiles] = useState<SavedProfileRow[]>([])
   const [drawings, setDrawings] = useState<Drawing[]>([])
 
   useEffect(() => {
-    setSavedProfiles(loadSavedProfiles())
-    const raw = localStorage.getItem('drawings')
-    setDrawings(raw ? (JSON.parse(raw) as Drawing[]) : [])
-  }, [])
+    if (!ready) return
+
+    const run = async () => {
+      if (isCloud && user) {
+        const [profiles, feed] = await Promise.all([
+          fetchProfilesForUser(user.id),
+          fetchDrawingsFeed(user.id),
+        ])
+        setSavedProfiles(profiles)
+        setDrawings(feed)
+      } else {
+        setSavedProfiles(loadSavedProfiles())
+        setDrawings(loadLegacyDrawingsFromStorage())
+      }
+    }
+
+    void run()
+  }, [ready, isCloud, user?.id])
 
   const profileNames = useMemo(
     () => mergedUserList(savedProfiles, collectUserNamesFromDrawings(drawings)),

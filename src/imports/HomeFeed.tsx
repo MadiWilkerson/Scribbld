@@ -4,12 +4,15 @@ import { AppNavFooter } from '../app/components/AppNavFooter'
 import { HeartIcon } from '../app/components/HeartIcon'
 import { MonsterAvatar } from '../app/components/MonsterAvatar'
 import { ASSETS } from './assets'
-import { parseMonsterConfig } from './monsterConfig'
+import { useAuth } from './authContext'
+import type { Drawing } from './drawingRecord'
 import {
   getActiveUserForLikes,
   loadOrMigrateDrawingLikers,
   writeDrawingLikers,
 } from './likeStorage'
+import { loadLegacyDrawingsFromStorage } from './legacyDrawings'
+import { parseMonsterConfig } from './monsterConfig'
 import {
   displayLabel,
   loadSavedProfiles,
@@ -17,6 +20,12 @@ import {
   type SavedProfileRow,
 } from './savedProfiles'
 import { scribbldCase } from './scribbldType'
+import {
+  fetchAllProfiles,
+  fetchDrawingsFeed,
+  subscribeDrawingsChanges,
+  toggleDrawingLike,
+} from './supabaseApi'
 
 function Header({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
@@ -40,16 +49,6 @@ function Header({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
       </div>
     </div>
   )
-}
-
-interface Drawing {
-  id: number
-  image: string
-  timestamp: string
-  userName?: string
-  /** Monster JSON config or legacy image data URL */
-  userMonster?: string
-  prompt?: string
 }
 
 function groupDrawingsByPrompt(drawings: Drawing[]) {
@@ -77,7 +76,6 @@ function groupDrawingsByPrompt(drawings: Drawing[]) {
   return groups
 }
 
-/** Avatar + name come from the drawing and saved profiles (same rules as Profile hub), not session-only keys. */
 function PosterAvatar({
   drawing,
   savedProfiles,
@@ -101,7 +99,6 @@ function PosterAvatar({
   return <MonsterAvatar config={cfg} size={32} />
 }
 
-/** Card width + `gap-4` (1rem) — must match the horizontal strip layout below. */
 const PROMPT_POST_STRIDE_PX = 312 + 16
 
 function PromptPostsCarousel({
@@ -110,8 +107,6 @@ function PromptPostsCarousel({
   items,
   drawings,
   savedProfiles,
-  likersByDrawing,
-  activeLikerLabel,
   toggleLike,
 }: {
   promptKey: string
@@ -119,12 +114,9 @@ function PromptPostsCarousel({
   items: Drawing[]
   drawings: Drawing[]
   savedProfiles: SavedProfileRow[]
-  likersByDrawing: Map<number, Set<string>>
-  activeLikerLabel: string
-  toggleLike: (drawingId: number) => void
+  toggleLike: (drawingId: string) => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  /** Skip wrap normalization while we teleport into the duplicate strip for seamless prev-from-first. */
   const loopTeleportRef = useRef(false)
   const n = items.length
   const multi = n > 1
@@ -168,13 +160,11 @@ function PromptPostsCarousel({
     let idx = Math.round(sl / stride)
     idx = Math.max(0, Math.min(n - 1, idx))
 
-    // Next from last: smooth one stride into duplicate first, then instant wrap to real first (same pixels).
     if (dir === 1 && idx === n - 1) {
       el.scrollTo({ left: cycle, behavior: 'smooth' })
       return
     }
 
-    // Prev from first: jump to duplicate strip (same visual as first), then smooth one stride back to last.
     if (dir === -1 && idx === 0) {
       loopTeleportRef.current = true
       el.scrollLeft = cycle
@@ -196,7 +186,9 @@ function PromptPostsCarousel({
     el.scrollTo({ left: nextIdx * stride, behavior: 'smooth' })
   }
 
-  const slides = multi ? ([0, 1] as const).flatMap((dup) => items.map((d) => ({ drawing: d, dup }))) : items.map((d) => ({ drawing: d, dup: 0 as const }))
+  const slides = multi
+    ? ([0, 1] as const).flatMap((dup) => items.map((d) => ({ drawing: d, dup })))
+    : items.map((d) => ({ drawing: d, dup: 0 as const }))
 
   return (
     <section className="space-y-2" data-name="prompt-feed-section">
@@ -250,17 +242,17 @@ function PromptPostsCarousel({
               <div className="-mt-3 flex items-center justify-between gap-2">
                 <div className="ml-4 flex min-w-0 flex-1 items-center justify-start gap-1.5">
                   <PosterAvatar drawing={drawing} savedProfiles={savedProfiles} allDrawings={drawings} />
-                        <span className="max-w-[200px] truncate text-left text-sm text-[#0f1027]">
-                          {scribbldCase(displayLabel(drawing.userName))}
-                        </span>
+                  <span className="max-w-[200px] truncate text-left text-sm text-[#0f1027]">
+                    {scribbldCase(displayLabel(drawing.userName))}
+                  </span>
                 </div>
                 <span className="flex shrink-0 -translate-x-1.5 items-center gap-1">
                   <HeartIcon
-                    filled={likersByDrawing.get(drawing.id)?.has(activeLikerLabel) ?? false}
+                    filled={drawing.likedByMe ?? false}
                     onClick={() => toggleLike(drawing.id)}
                   />
                   <span className="min-w-[1ch] text-sm tabular-nums text-[#0f1027]">
-                    {likersByDrawing.get(drawing.id)?.size ?? 0}
+                    {drawing.likeCount ?? 0}
                   </span>
                 </span>
               </div>
@@ -275,42 +267,100 @@ function PromptPostsCarousel({
 export default function HomeFeed() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { ready, user, isCloud } = useAuth()
+
   const [drawings, setDrawings] = useState<Drawing[]>([])
-  const [likersByDrawing, setLikersByDrawing] = useState<Map<number, Set<string>>>(() =>
+  const [likersByDrawing, setLikersByDrawing] = useState<Map<string, Set<string>>>(() =>
     loadOrMigrateDrawingLikers(),
   )
   const [savedProfiles, setSavedProfiles] = useState<SavedProfileRow[]>(() => loadSavedProfiles())
 
+  const refreshCloud = useCallback(async () => {
+    if (!user) return
+    const [d, p] = await Promise.all([fetchDrawingsFeed(user.id), fetchAllProfiles()])
+    setDrawings(d)
+    setSavedProfiles(p)
+  }, [user])
+
   useEffect(() => {
-    const savedDrawings = localStorage.getItem('drawings')
-    if (savedDrawings) {
-      setDrawings(JSON.parse(savedDrawings))
-    } else {
-      setDrawings([])
+    if (!ready) return
+
+    if (!isCloud) {
+      setDrawings(loadLegacyDrawingsFromStorage())
+      setLikersByDrawing(loadOrMigrateDrawingLikers())
+      setSavedProfiles(loadSavedProfiles())
+      return
     }
 
-    setLikersByDrawing(loadOrMigrateDrawingLikers())
-    setSavedProfiles(loadSavedProfiles())
-  }, [location.pathname])
+    if (!user) return
 
-  const toggleLike = (drawingId: number) => {
-    const label = displayLabel(getActiveUserForLikes())
-    setLikersByDrawing((prev) => {
-      const next = new Map<number, Set<string>>()
-      prev.forEach((set, id) => next.set(id, new Set(set)))
-      const set = new Set(next.get(drawingId) ?? [])
-      if (set.has(label)) set.delete(label)
-      else set.add(label)
-      if (set.size === 0) next.delete(drawingId)
-      else next.set(drawingId, set)
-      writeDrawingLikers(next)
-      return next
+    void refreshCloud()
+    const unsub = subscribeDrawingsChanges(() => {
+      void refreshCloud()
     })
-  }
-
-  const promptGroups = useMemo(() => groupDrawingsByPrompt(drawings), [drawings])
+    return () => {
+      unsub?.()
+    }
+  }, [ready, isCloud, user, location.pathname, refreshCloud])
 
   const activeLikerLabel = displayLabel(getActiveUserForLikes())
+
+  const feedDrawings = useMemo(() => {
+    if (isCloud) return drawings
+    return drawings.map((d) => ({
+      ...d,
+      likeCount: likersByDrawing.get(d.id)?.size ?? 0,
+      likedByMe: likersByDrawing.get(d.id)?.has(activeLikerLabel) ?? false,
+    }))
+  }, [isCloud, drawings, likersByDrawing, activeLikerLabel])
+
+  const toggleLike = useCallback(
+    async (drawingId: string) => {
+      if (!isCloud || !user) {
+        const label = displayLabel(getActiveUserForLikes())
+        setLikersByDrawing((prev) => {
+          const next = new Map<string, Set<string>>()
+          prev.forEach((set, id) => next.set(id, new Set(set)))
+          const set = new Set(next.get(drawingId) ?? [])
+          if (set.has(label)) set.delete(label)
+          else set.add(label)
+          if (set.size === 0) next.delete(drawingId)
+          else next.set(drawingId, set)
+          writeDrawingLikers(next)
+          return next
+        })
+        return
+      }
+
+      const d = drawings.find((x) => x.id === drawingId)
+      if (!d) return
+      const wasLiked = !!d.likedByMe
+      const ok = await toggleDrawingLike(user.id, drawingId, wasLiked)
+      if (!ok) return
+      setDrawings((prev) =>
+        prev.map((x) =>
+          x.id === drawingId
+            ? {
+                ...x,
+                likedByMe: !wasLiked,
+                likeCount: Math.max(0, (x.likeCount ?? 0) + (wasLiked ? -1 : 1)),
+              }
+            : x,
+        ),
+      )
+    },
+    [isCloud, user, drawings],
+  )
+
+  const promptGroups = useMemo(() => groupDrawingsByPrompt(feedDrawings), [feedDrawings])
+
+  if (!ready || (isCloud && !user)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f9fdff] font-sans text-sm text-[#0f1027]/70">
+        {scribbldCase('Loading…')}
+      </div>
+    )
+  }
 
   return (
     <div className="bg-[#f9fdff] relative w-full min-h-screen flex items-start justify-center overflow-y-auto" data-name="HomeFeed">
@@ -323,10 +373,8 @@ export default function HomeFeed() {
               promptKey={group.promptKey}
               promptLabel={group.promptLabel}
               items={group.items}
-              drawings={drawings}
+              drawings={feedDrawings}
               savedProfiles={savedProfiles}
-              likersByDrawing={likersByDrawing}
-              activeLikerLabel={activeLikerLabel}
               toggleLike={toggleLike}
             />
           ))}
