@@ -3,7 +3,7 @@ const STORAGE_STARTED = 'scribblePromptStartedAt'
 const STORAGE_RECENT = 'scribblePromptRecentHistory'
 
 /** How long the same prompt stays active app-wide (scribble creator). */
-export const SCRIBBLE_PROMPT_DURATION_MS = 60 * 60 * 1000
+export const SCRIBBLE_PROMPT_DURATION_MS = 15 * 60 * 1000
 
 /** A prompt won’t be chosen again while it appears in this rolling window. */
 export const SCRIBBLE_PROMPT_NO_REPEAT_MS = 12 * 60 * 60 * 1000
@@ -174,31 +174,44 @@ function recordPromptUse(text: string, now: number) {
   writePromptHistory(history)
 }
 
-/** Picks a new prompt and stores the start time (1-hour window). */
-export function rollNewPromptSession(): ScribblePromptSession {
-  const now = Date.now()
-  const text = pickPromptExcludingRecent(now)
-  recordPromptUse(text, now)
+/** Picks a new prompt and stores the start time. */
+export function rollNewPromptSession(at: number = Date.now()): ScribblePromptSession {
+  const text = pickPromptExcludingRecent(at)
+  recordPromptUse(text, at)
   localStorage.setItem(STORAGE_PROMPT, text)
-  localStorage.setItem(STORAGE_STARTED, String(now))
-  return { text, expiresAt: now + SCRIBBLE_PROMPT_DURATION_MS }
+  localStorage.setItem(STORAGE_STARTED, String(at))
+  return { text, expiresAt: at + SCRIBBLE_PROMPT_DURATION_MS }
 }
 
-/** Current prompt if still within the hour; otherwise rolls a new one. */
-export function getActivePromptSession(): ScribblePromptSession {
-  const now = Date.now()
-  const text = localStorage.getItem(STORAGE_PROMPT)
-  const started = localStorage.getItem(STORAGE_STARTED)
-  if (text && started) {
-    const t = Number(started)
-    if (Number.isFinite(t)) {
-      const expiresAt = t + SCRIBBLE_PROMPT_DURATION_MS
-      if (expiresAt > now) {
-        return { text, expiresAt }
-      }
-    }
+/**
+ * Returns the session that should be active at `now`.
+ *
+ * Important: browsers can't run timers while the tab/app is closed, so we base the schedule on
+ * persisted timestamps and "catch up" by rolling through any missed prompt intervals.
+ */
+export function getActivePromptSession(now: number = Date.now()): ScribblePromptSession {
+  const storedText = localStorage.getItem(STORAGE_PROMPT)
+  const storedStartedRaw = localStorage.getItem(STORAGE_STARTED)
+  const storedStarted = storedStartedRaw != null ? Number(storedStartedRaw) : NaN
+
+  // No prior session (first run or storage cleared)
+  if (!storedText || !Number.isFinite(storedStarted)) {
+    return rollNewPromptSession(now)
   }
-  return rollNewPromptSession()
+
+  const elapsed = now - storedStarted
+  if (elapsed < SCRIBBLE_PROMPT_DURATION_MS) {
+    return { text: storedText, expiresAt: storedStarted + SCRIBBLE_PROMPT_DURATION_MS }
+  }
+
+  // We missed 1+ intervals. Roll forward at exact boundaries so history reflects what "would have" happened.
+  const missed = Math.floor(elapsed / SCRIBBLE_PROMPT_DURATION_MS)
+  let session: ScribblePromptSession = { text: storedText, expiresAt: storedStarted + SCRIBBLE_PROMPT_DURATION_MS }
+  for (let i = 1; i <= missed; i++) {
+    const at = storedStarted + i * SCRIBBLE_PROMPT_DURATION_MS
+    session = rollNewPromptSession(at)
+  }
+  return session.expiresAt > now ? session : rollNewPromptSession(now)
 }
 
 /** e.g. "59:42 left" */

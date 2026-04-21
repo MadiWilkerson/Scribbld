@@ -5,7 +5,6 @@ import { ASSETS } from './assets'
 import {
   formatScribblePromptTimeLeft,
   getActivePromptSession,
-  rollNewPromptSession,
 } from './drawingPrompts'
 import { parseMonsterConfig, stringifyMonsterConfig } from './monsterConfig'
 import { getActiveUserForLikes } from './likeStorage'
@@ -814,7 +813,7 @@ export default function ScribblCreator() {
     const id = window.setInterval(() => {
       const t = Date.now()
       setNow(t)
-      setSession((s) => (t >= s.expiresAt ? rollNewPromptSession() : s))
+      setSession(() => getActivePromptSession(t))
     }, 1000)
     return () => clearInterval(id)
   }, [])
