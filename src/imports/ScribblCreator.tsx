@@ -12,7 +12,7 @@ import { getActiveUserForLikes } from './likeStorage'
 import { loadLegacyDrawingsFromStorage, saveLegacyDrawingsToStorage } from './legacyDrawings'
 import { loadSavedProfiles, resolveMonsterForUser, upsertSavedProfile } from './savedProfiles'
 import { scribbldCase } from './scribbldType'
-import { isSupabaseConfigured } from './supabaseClient'
+import { isSupabaseConfigured, supabase } from './supabaseClient'
 import { fetchDrawingsFeed, fetchProfilesForUser, insertDrawing, upsertProfileCloud } from './supabaseApi'
 
 /** Persisted until the user clears the canvas or posts (see ScribblCreator). */
@@ -417,7 +417,7 @@ function Drawing({
         />
       </div>
       <div
-        className="absolute left-[20px] top-[542px] z-[15] h-[40px] w-[352px]"
+        className="absolute left-[20px] z-[60] h-[40px] w-[352px] max-w-[calc(100vw-40px)] touch-manipulation bottom-[calc(93px+env(safe-area-inset-bottom,0px)+60px)]"
         data-name="post-actions"
       >
         <div
@@ -606,7 +606,7 @@ function Drawing({
         </div>
         <button
           type="button"
-          className="absolute right-0 top-0 z-10 h-[40px] w-[120px] -translate-x-1 translate-y-2.5 cursor-pointer border-0 bg-transparent p-0 transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f1027]/40"
+          className="absolute right-0 top-0 z-10 h-[40px] w-[120px] min-h-[44px] min-w-[120px] -translate-x-1 translate-y-2.5 cursor-pointer border-0 bg-transparent p-0 transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f1027]/40 touch-manipulation"
           data-name="post-drawing"
           onClick={saveDrawing}
         >
@@ -622,7 +622,7 @@ function Drawing({
         </button>
       </div>
       <div
-        className="absolute left-[20px] top-[620px] flex w-[352px] justify-center"
+        className="absolute left-[20px] z-[60] flex w-[352px] max-w-[calc(100vw-40px)] justify-center touch-manipulation bottom-[calc(93px+env(safe-area-inset-bottom,0px)+10px)]"
         data-name="size-control"
       >
         <div
@@ -680,7 +680,7 @@ function Drawing({
 
 export default function ScribblCreator() {
   const navigate = useNavigate()
-  const { isCloud, user, ready } = useAuth()
+  const { isCloud, user } = useAuth()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
   const [drawingMode, setDrawingMode] = useState<'pen' | 'eraser'>('pen')
@@ -903,23 +903,25 @@ export default function ScribblCreator() {
     if (!canvas) return
 
     const run = async () => {
-      if (isSupabaseConfigured && (!ready || !user)) {
-        return
-      }
-
       const drawingData = canvas.toDataURL('image/png')
       const userName = getActiveUserForLikes()
 
-      if (isCloud && user) {
+      let cloudUser = isCloud && user ? user : null
+      if (isSupabaseConfigured && supabase && !cloudUser) {
+        const { data } = await supabase.auth.getSession()
+        cloudUser = data.session?.user ?? null
+      }
+
+      if (cloudUser) {
         const [priorDrawings, savedProfiles] = await Promise.all([
-          fetchDrawingsFeed(user.id),
-          fetchProfilesForUser(user.id),
+          fetchDrawingsFeed(cloudUser.id),
+          fetchProfilesForUser(cloudUser.id),
         ])
         const monsterConfig = resolveMonsterForUser(userName, savedProfiles, priorDrawings)
         const userMonster = stringifyMonsterConfig(monsterConfig)
 
         const res = await insertDrawing({
-          userId: user.id,
+          userId: cloudUser.id,
           authorDisplayName: userName,
           monsterJson: userMonster,
           promptText: session.text,
@@ -934,7 +936,7 @@ export default function ScribblCreator() {
         const mc = parseMonsterConfig(userMonster)
         if (mc) {
           upsertSavedProfile(userName, mc)
-          void upsertProfileCloud(user.id, userName, userMonster)
+          void upsertProfileCloud(cloudUser.id, userName, userMonster)
         }
       } else {
         const priorDrawings = loadLegacyDrawingsFromStorage()
