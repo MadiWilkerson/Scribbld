@@ -18,7 +18,7 @@ Without env vars, drawings and profiles stay on the device (`localStorage`). To 
 1. Create a [Supabase](https://supabase.com) project (free tier is enough).
 2. In **Authentication → Providers**, enable **Anonymous** sign-in.
 3. In the SQL editor, run `supabase/migrations/001_initial.sql` (tables, RLS, storage bucket `drawing-images`).
-4. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from **Project Settings → API**.
+4. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (from **Project Settings → Data API / API Keys**): either copy `.env.example` to `.env.local`, or if your environment blocks dotfiles, create **`supabase.env`** in the project root with the same two lines (that file is gitignored and loaded by Vite).
 5. On **Vercel** (or your host), add the same two variables to the project environment and redeploy.
 
 To test the production build locally:

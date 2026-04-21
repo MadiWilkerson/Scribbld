@@ -18,9 +18,12 @@ create table if not exists public.profiles (
   user_id uuid not null references auth.users (id) on delete cascade,
   display_name text not null,
   monster_json text not null,
-  updated_at timestamptz not null default now(),
-  unique (user_id, lower(display_name))
+  updated_at timestamptz not null default now()
 );
+
+-- Table UNIQUE(...) only allows column names, not expressions; use a unique index for case-insensitive names per user.
+create unique index if not exists profiles_user_id_display_name_lower_key
+  on public.profiles (user_id, lower(display_name));
 
 create table if not exists public.drawing_likes (
   drawing_id uuid not null references public.drawings (id) on delete cascade,

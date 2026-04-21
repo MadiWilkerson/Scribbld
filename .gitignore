@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local Supabase vars (optional alternative to .env.local when dotfiles are blocked)
+supabase.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
