@@ -123,12 +123,14 @@ function PromptPostsCarousel({
   toggleLike: (drawingId: number) => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  /** Skip wrap normalization while we teleport into the duplicate strip for seamless prev-from-first. */
+  const loopTeleportRef = useRef(false)
   const n = items.length
   const multi = n > 1
 
   const normalizeScrollLeft = useCallback(() => {
     const el = scrollRef.current
-    if (!el || !multi) return
+    if (!el || !multi || loopTeleportRef.current) return
     const cycle = n * PROMPT_POST_STRIDE_PX
     while (el.scrollLeft >= cycle) {
       el.scrollLeft -= cycle
@@ -150,17 +152,47 @@ function PromptPostsCarousel({
     return () => el.removeEventListener('scroll', onScroll)
   }, [multi, normalizeScrollLeft])
 
+  const endLoopTeleport = useCallback(() => {
+    loopTeleportRef.current = false
+  }, [])
+
   const scrollByDir = (dir: -1 | 1) => {
     const el = scrollRef.current
     if (!el || !multi) return
     normalizeScrollLeft()
+    const stride = PROMPT_POST_STRIDE_PX
+    const cycle = n * stride
     let sl = el.scrollLeft
-    const cycle = n * PROMPT_POST_STRIDE_PX
     while (sl >= cycle) sl -= cycle
-    let idx = Math.round(sl / PROMPT_POST_STRIDE_PX)
+    let idx = Math.round(sl / stride)
     idx = Math.max(0, Math.min(n - 1, idx))
-    idx = (idx + dir + n) % n
-    el.scrollTo({ left: idx * PROMPT_POST_STRIDE_PX, behavior: 'smooth' })
+
+    // Next from last: smooth one stride into duplicate first, then instant wrap to real first (same pixels).
+    if (dir === 1 && idx === n - 1) {
+      el.scrollTo({ left: cycle, behavior: 'smooth' })
+      return
+    }
+
+    // Prev from first: jump to duplicate strip (same visual as first), then smooth one stride back to last.
+    if (dir === -1 && idx === 0) {
+      loopTeleportRef.current = true
+      el.scrollLeft = cycle
+      requestAnimationFrame(() => {
+        el.scrollTo({ left: (n - 1) * stride, behavior: 'smooth' })
+        let cleared = false
+        const done = () => {
+          if (cleared) return
+          cleared = true
+          endLoopTeleport()
+        }
+        el.addEventListener('scrollend', done, { once: true })
+        window.setTimeout(done, 500)
+      })
+      return
+    }
+
+    const nextIdx = (idx + dir + n) % n
+    el.scrollTo({ left: nextIdx * stride, behavior: 'smooth' })
   }
 
   const slides = multi ? ([0, 1] as const).flatMap((dup) => items.map((d) => ({ drawing: d, dup }))) : items.map((d) => ({ drawing: d, dup: 0 as const }))
@@ -170,30 +202,30 @@ function PromptPostsCarousel({
       <h2 className="px-0.5 font-sans text-lg font-semibold leading-snug text-[#0f1027] line-clamp-4">
         {promptLabel}
       </h2>
-      <div className="relative w-full" data-name="prompt-posts-carousel">
+      <div className="relative w-[312px] overflow-visible" data-name="prompt-posts-carousel">
         {multi && (
           <button
             type="button"
-            className="absolute left-0 top-[156px] z-20 flex size-10 -translate-x-1 -translate-y-1/2 items-center justify-center rounded-full bg-[#f9fdff]/90 shadow-[0_2px_12px_-2px_rgba(15,16,39,0.25)] ring-1 ring-[#0f1027]/10 transition-opacity hover:opacity-90 active:opacity-80"
+            className="absolute left-[-22px] top-[156px] z-20 flex -translate-y-1/2 cursor-pointer items-center border-0 bg-transparent p-0 outline-none transition-opacity hover:opacity-80 active:opacity-70 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#0f1027]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9fdff]"
             aria-label="Previous post"
             onClick={() => scrollByDir(-1)}
           >
-            <img src={ASSETS.scrollLeft} alt="" className="size-8 max-w-none object-contain" draggable={false} />
+            <img src={ASSETS.scrollLeft} alt="" className="size-7 max-w-none object-contain" draggable={false} />
           </button>
         )}
         {multi && (
           <button
             type="button"
-            className="absolute right-0 top-[156px] z-20 flex size-10 translate-x-1 -translate-y-1/2 items-center justify-center rounded-full bg-[#f9fdff]/90 shadow-[0_2px_12px_-2px_rgba(15,16,39,0.25)] ring-1 ring-[#0f1027]/10 transition-opacity hover:opacity-90 active:opacity-80"
+            className="absolute right-[-22px] top-[156px] z-20 flex -translate-y-1/2 cursor-pointer items-center border-0 bg-transparent p-0 outline-none transition-opacity hover:opacity-80 active:opacity-70 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#0f1027]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9fdff]"
             aria-label="Next post"
             onClick={() => scrollByDir(1)}
           >
-            <img src={ASSETS.scrollRight} alt="" className="size-8 max-w-none object-contain" draggable={false} />
+            <img src={ASSETS.scrollRight} alt="" className="size-7 max-w-none object-contain" draggable={false} />
           </button>
         )}
         <div
           ref={scrollRef}
-          className="flex touch-pan-x gap-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden"
+          className="flex touch-pan-x gap-4 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-proximity [&::-webkit-scrollbar]:hidden"
           data-name="prompt-posts-scroll"
         >
           {slides.map(({ drawing, dup }) => (
@@ -283,7 +315,7 @@ export default function HomeFeed() {
     <div className="bg-[#f9fdff] relative w-full min-h-screen flex items-start justify-center overflow-y-auto" data-name="HomeFeed">
       <div className="relative w-[393px] min-h-full">
         <Header navigate={navigate} />
-        <div className="absolute left-[41px] top-[156px] w-[312px] space-y-8 pb-[120px]">
+        <div className="absolute left-[41px] top-[156px] w-[312px] space-y-8 overflow-x-visible pb-[120px]">
           {promptGroups.map((group) => (
             <PromptPostsCarousel
               key={group.promptKey}
