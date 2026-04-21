@@ -392,7 +392,7 @@ function Drawing({
 
   return (
     <div className="absolute contents left-[30px] top-[170px]" data-name="Drawing">
-      <div className="absolute bg-white left-[20px] rounded-[31px] w-[352px] h-[352px] top-[200px] overflow-hidden" data-name="drawingbox">
+      <div className="absolute bg-white left-[20px] rounded-[31px] w-[352px] h-[352px] top-[214px] overflow-hidden" data-name="drawingbox">
         <canvas
           ref={canvasRef}
           width={332}
@@ -412,7 +412,7 @@ function Drawing({
         />
       </div>
       <div
-        className="absolute left-[20px] top-[528px] z-[15] h-[40px] w-[352px]"
+        className="absolute left-[20px] top-[542px] z-[15] h-[40px] w-[352px]"
         data-name="post-actions"
       >
         <div
@@ -617,7 +617,7 @@ function Drawing({
         </button>
       </div>
       <div
-        className="absolute left-[20px] top-[606px] flex w-[352px] justify-center"
+        className="absolute left-[20px] top-[620px] flex w-[352px] justify-center"
         data-name="size-control"
       >
         <div
@@ -932,18 +932,18 @@ export default function ScribblCreator() {
       <div className="relative w-[393px] min-h-screen">
         <Header navigate={navigate} />
         <div
-          className="absolute left-5 right-5 top-[118px] z-[5] flex flex-col items-center gap-1 text-center"
+          className="absolute left-5 right-5 top-[118px] z-[5] flex flex-col items-center gap-1.5 text-center"
           data-name="prompt-block"
         >
           <p
-            className="font-sans text-sm font-medium tabular-nums text-[#0f1027]/65"
+            className="font-sans text-base font-semibold tabular-nums text-[#0f1027]/65"
             aria-live="polite"
             data-name="prompt-countdown"
           >
             {formatScribblePromptTimeLeft(session.expiresAt - now)}
           </p>
           <p
-            className="line-clamp-2 max-w-full font-sans text-base font-medium leading-tight text-[#0f1027]"
+            className="line-clamp-2 max-w-full font-sans text-xl font-semibold leading-snug text-[#0f1027]"
             data-name="drawing-prompt"
             title={session.text}
           >
