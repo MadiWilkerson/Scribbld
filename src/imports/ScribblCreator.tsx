@@ -932,19 +932,20 @@ export default function ScribblCreator() {
       <div className="relative w-[393px] min-h-screen">
         <Header navigate={navigate} />
         <div
-          className="absolute left-5 right-5 top-[118px] z-[5] flex flex-col items-center gap-2 text-center"
+          className="absolute left-5 right-5 top-[118px] z-[5] flex flex-col items-center gap-1 text-center"
           data-name="prompt-block"
         >
           <p
-            className="font-sans text-lg font-semibold tabular-nums text-[#0f1027]/65"
+            className="font-sans text-sm font-medium tabular-nums text-[#0f1027]/65"
             aria-live="polite"
             data-name="prompt-countdown"
           >
             {formatScribblePromptTimeLeft(session.expiresAt - now)}
           </p>
           <p
-            className="font-sans text-2xl font-semibold leading-snug text-[#0f1027]"
+            className="line-clamp-2 max-w-full font-sans text-base font-medium leading-tight text-[#0f1027]"
             data-name="drawing-prompt"
+            title={session.text}
           >
             {session.text}
           </p>
