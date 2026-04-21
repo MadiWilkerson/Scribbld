@@ -239,9 +239,9 @@ function Drawing({
   drawingMode: 'pen' | 'eraser'
   setDrawingMode: (mode: 'pen' | 'eraser') => void
   saveDrawing: () => void
-  startDrawing: (e: React.MouseEvent<HTMLCanvasElement>) => void
-  draw: (e: React.MouseEvent<HTMLCanvasElement>) => void
-  stopDrawing: () => void
+  startDrawing: (e: React.PointerEvent<HTMLCanvasElement>) => void
+  draw: (e: React.PointerEvent<HTMLCanvasElement>) => void
+  stopDrawing: (e?: React.PointerEvent<HTMLCanvasElement>) => void
   undo: () => void
   redo: () => void
   canUndo: boolean
@@ -397,13 +397,13 @@ function Drawing({
           ref={canvasRef}
           width={332}
           height={332}
-          className={`absolute left-[10px] top-[10px] size-[332px] rounded-[22px] z-0 ${
+          className={`touch-none absolute left-[10px] top-[10px] size-[332px] rounded-[22px] z-0 ${
             fillArmed ? 'cursor-cell' : 'cursor-crosshair'
           }`}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
+          onPointerDown={startDrawing}
+          onPointerMove={draw}
+          onPointerUp={(e) => stopDrawing(e)}
+          onPointerCancel={(e) => stopDrawing(e)}
         />
         <img
           src={ASSETS.square}
@@ -676,7 +676,7 @@ function Drawing({
 export default function ScribblCreator() {
   const navigate = useNavigate()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [isDrawing, setIsDrawing] = useState(false)
+  const isDrawingRef = useRef(false)
   const [drawingMode, setDrawingMode] = useState<'pen' | 'eraser'>('pen')
   const [selectedColor, setSelectedColor] = useState('#000000')
   const [penSize, setPenSize] = useState(3)
@@ -818,7 +818,9 @@ export default function ScribblCreator() {
     return () => clearInterval(id)
   }, [])
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -836,7 +838,8 @@ export default function ScribblCreator() {
       return
     }
 
-    setIsDrawing(true)
+    isDrawingRef.current = true
+    e.currentTarget.setPointerCapture(e.pointerId)
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -845,8 +848,8 @@ export default function ScribblCreator() {
     ctx.moveTo(x, y)
   }
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return
+  const draw = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingRef.current) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -876,9 +879,16 @@ export default function ScribblCreator() {
     ctx.stroke()
   }
 
-  const stopDrawing = () => {
-    if (!isDrawing) return
-    setIsDrawing(false)
+  const stopDrawing = (e?: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingRef.current) return
+    isDrawingRef.current = false
+    if (e?.currentTarget && e.currentTarget.hasPointerCapture(e.pointerId)) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId)
+      } catch {
+        /* already released */
+      }
+    }
     commitAfterStroke()
   }
 
