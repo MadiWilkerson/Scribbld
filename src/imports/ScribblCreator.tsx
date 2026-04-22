@@ -990,13 +990,24 @@ export default function ScribblCreator() {
           className="absolute left-5 right-5 top-[118px] z-[5] flex flex-col items-center gap-1.5 text-center"
           data-name="prompt-block"
         >
-          <p
-            className="font-sans text-base font-semibold tabular-nums text-[#0f1027]/65"
+          <div
+            className="flex items-center justify-center gap-2 font-sans text-base font-semibold tabular-nums text-[#0f1027]/65"
             aria-live="polite"
             data-name="prompt-countdown"
           >
-            {formatScribblePromptTimeLeft(session.expiresAt - now)}
-          </p>
+            <img
+              src={ASSETS.hourglass}
+              alt=""
+              width={21}
+              height={28}
+              className="shrink-0 object-contain [transition:transform_0.2s_ease-out]"
+              style={{
+                transform: Math.floor(now / 1000) % 2 === 1 ? 'scaleY(-1)' : 'scaleY(1)',
+              }}
+              draggable={false}
+            />
+            <p className="m-0">{formatScribblePromptTimeLeft(session.expiresAt - now)}</p>
+          </div>
           <p
             className="line-clamp-2 max-w-full font-sans text-xl font-semibold leading-snug text-[#0f1027]"
             data-name="drawing-prompt"

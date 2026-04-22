@@ -31,4 +31,5 @@ export const ASSETS = {
   /** Pen size slider track + thumb on scribble creator */
   bigLine: '/assets/scribbld_BigLine.svg',
   filledCircle: '/assets/scribbld_FilledCircle.svg',
+  hourglass: '/assets/scribbld_Hourglass.svg',
 } as const
