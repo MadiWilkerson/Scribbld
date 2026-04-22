@@ -991,7 +991,7 @@ export default function ScribblCreator() {
           data-name="prompt-block"
         >
           <div
-            className="flex items-center justify-center gap-2 font-sans text-base font-semibold tabular-nums text-[#0f1027]/65"
+            className="flex items-center justify-center gap-2"
             aria-live="polite"
             data-name="prompt-countdown"
           >
@@ -1003,7 +1003,9 @@ export default function ScribblCreator() {
               className="scribbld-hourglass-animate shrink-0 object-contain"
               draggable={false}
             />
-            <p className="m-0">{formatScribblePromptTimeLeft(session.expiresAt - now)}</p>
+            <p className="m-0 font-sans text-lg font-semibold tabular-nums text-[#0f1027]/65">
+              {formatScribblePromptTimeLeft(session.expiresAt - now)}
+            </p>
           </div>
           <p
             className="line-clamp-2 max-w-full font-sans text-xl font-semibold leading-snug text-[#0f1027]"
