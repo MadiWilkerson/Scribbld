@@ -232,19 +232,19 @@ export default function ProfileHubPage() {
       data-name="ProfileHubPage"
     >
       <div className="mx-auto w-full max-w-[400px] px-4 pb-[calc(93px+max(1.25rem,env(safe-area-inset-bottom)))]">
-        <div className="flex flex-col items-center gap-3 pt-0.5">
+        <div className="flex flex-col items-center gap-1 pt-0">
           <div className="flex w-full justify-center">
             <button
               type="button"
-              className="shrink-0 cursor-pointer"
+              className="shrink-0 cursor-pointer leading-[0]"
               onClick={() => navigate('/splash')}
               aria-label={scribbldCase('SCRIBBLD — splash')}
             >
-              <img src={ASSETS.logo} alt="" className="h-auto w-[210px] object-contain" />
+              <img src={ASSETS.logo} alt="" className="block h-auto w-[210px] object-contain" />
             </button>
           </div>
 
-          <div className="flex w-full flex-col items-center gap-2">
+          <div className="-mt-0.5 flex w-full flex-col items-center gap-2">
             <button
               type="button"
               className="cursor-pointer rounded-full border-0 bg-transparent p-0 ring-2 ring-transparent transition duration-200 ease-out hover:scale-[1.04] hover:ring-[#0f1027]/25 hover:shadow-[0_10px_28px_-12px_rgba(15,16,39,0.35)] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0f1027]/35"

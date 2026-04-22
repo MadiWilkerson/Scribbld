@@ -167,14 +167,14 @@ export default function Profile() {
         className="shrink-0 border-b border-[#0f1027]/10 bg-[#f9fdff] px-4 pb-0 shadow-[0_6px_16px_-8px_rgba(15,16,39,0.12)]"
         style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
       >
-        <div className="mx-auto flex w-full max-w-[400px] flex-col items-center gap-1.5">
+        <div className="mx-auto flex w-full max-w-[400px] flex-col items-center gap-0">
           <img
             src={ASSETS.logo}
             alt={scribbldCase('SCRIBBLD')}
-            className="h-auto w-[210px] shrink-0 cursor-pointer object-contain"
+            className="block h-auto w-[210px] shrink-0 cursor-pointer object-contain"
             onClick={() => navigate('/splash')}
           />
-          <div className="flex w-full flex-col items-center gap-0">
+          <div className="-mt-1 flex w-full flex-col items-center gap-0">
             <MonsterAvatar config={config} size={152} />
             <label className="sr-only" htmlFor="profile-display-name">
               {scribbldCase('Display name')}

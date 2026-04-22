@@ -12,12 +12,17 @@
   }
 }
 
-/* Prompt timer: 180°/s, seamless loop (linear avoids a visible hitch each second). */
+/* Prompt timer: equal quarters — pause at 0°, ease to 180°, pause, ease to 360° (same as 0°). */
 @keyframes scribbld-hourglass-rotate {
-  from {
+  0%,
+  25% {
     transform: rotate(0deg);
   }
-  to {
+  50%,
+  75% {
+    transform: rotate(180deg);
+  }
+  100% {
     transform: rotate(360deg);
   }
 }
@@ -25,6 +30,6 @@
 @layer utilities {
   .scribbld-hourglass-animate {
     transform-origin: center;
-    animation: scribbld-hourglass-rotate 2s linear infinite;
+    animation: scribbld-hourglass-rotate 4s ease-in-out infinite;
   }
 }
