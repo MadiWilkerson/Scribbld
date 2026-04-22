@@ -11,3 +11,20 @@
     font-size: 125%;
   }
 }
+
+/* Prompt timer: 180°/s, seamless loop (linear avoids a visible hitch each second). */
+@keyframes scribbld-hourglass-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer utilities {
+  .scribbld-hourglass-animate {
+    transform-origin: center;
+    animation: scribbld-hourglass-rotate 2s linear infinite;
+  }
+}

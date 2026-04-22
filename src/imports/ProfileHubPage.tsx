@@ -232,7 +232,7 @@ export default function ProfileHubPage() {
       data-name="ProfileHubPage"
     >
       <div className="mx-auto w-full max-w-[400px] px-4 pb-[calc(93px+max(1.25rem,env(safe-area-inset-bottom)))]">
-        <div className="flex flex-col items-center gap-6 pt-2">
+        <div className="flex flex-col items-center gap-3 pt-0.5">
           <div className="flex w-full justify-center">
             <button
               type="button"

@@ -167,7 +167,7 @@ export default function Profile() {
         className="shrink-0 border-b border-[#0f1027]/10 bg-[#f9fdff] px-4 pb-0 shadow-[0_6px_16px_-8px_rgba(15,16,39,0.12)]"
         style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
       >
-        <div className="mx-auto flex w-full max-w-[400px] flex-col items-center gap-3">
+        <div className="mx-auto flex w-full max-w-[400px] flex-col items-center gap-1.5">
           <img
             src={ASSETS.logo}
             alt={scribbldCase('SCRIBBLD')}

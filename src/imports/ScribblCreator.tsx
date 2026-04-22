@@ -1000,10 +1000,7 @@ export default function ScribblCreator() {
               alt=""
               width={14}
               height={19}
-              className="shrink-0 origin-center object-contain transition-transform duration-200 ease-out"
-              style={{
-                transform: `rotate(${Math.floor(now / 1000) * 180}deg)`,
-              }}
+              className="scribbld-hourglass-animate shrink-0 object-contain"
               draggable={false}
             />
             <p className="m-0">{formatScribblePromptTimeLeft(session.expiresAt - now)}</p>
