@@ -998,11 +998,11 @@ export default function ScribblCreator() {
             <img
               src={publicAsset(ASSETS.hourglass)}
               alt=""
-              width={21}
-              height={28}
-              className="shrink-0 object-contain [transition:transform_0.2s_ease-out]"
+              width={14}
+              height={19}
+              className="shrink-0 origin-center object-contain transition-transform duration-200 ease-out"
               style={{
-                transform: Math.floor(now / 1000) % 2 === 1 ? 'scaleY(-1)' : 'scaleY(1)',
+                transform: `rotate(${Math.floor(now / 1000) * 180}deg)`,
               }}
               draggable={false}
             />

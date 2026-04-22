@@ -240,7 +240,7 @@ export default function ProfileHubPage() {
               onClick={() => navigate('/splash')}
               aria-label={scribbldCase('SCRIBBLD — splash')}
             >
-              <img src={ASSETS.logo} alt="" className="h-auto w-[180px] object-contain" />
+              <img src={ASSETS.logo} alt="" className="h-auto w-[210px] object-contain" />
             </button>
           </div>
 

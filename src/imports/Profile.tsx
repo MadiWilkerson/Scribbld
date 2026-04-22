@@ -171,7 +171,7 @@ export default function Profile() {
           <img
             src={ASSETS.logo}
             alt={scribbldCase('SCRIBBLD')}
-            className="h-auto w-[180px] shrink-0 cursor-pointer object-contain"
+            className="h-auto w-[210px] shrink-0 cursor-pointer object-contain"
             onClick={() => navigate('/splash')}
           />
           <div className="flex w-full flex-col items-center gap-0">
