@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppNavFooter } from '../app/components/AppNavFooter'
-import { ASSETS } from './assets'
+import { ASSETS, publicAsset } from './assets'
 import {
   formatScribblePromptTimeLeft,
   getActivePromptSession,
@@ -987,7 +987,7 @@ export default function ScribblCreator() {
       <div className="relative w-[393px] min-h-screen">
         <Header navigate={navigate} />
         <div
-          className="absolute left-5 right-5 top-[118px] z-[5] flex flex-col items-center gap-1.5 text-center"
+          className="pointer-events-none absolute left-5 right-5 top-[118px] z-[15] flex flex-col items-center gap-1.5 text-center"
           data-name="prompt-block"
         >
           <div
@@ -996,7 +996,7 @@ export default function ScribblCreator() {
             data-name="prompt-countdown"
           >
             <img
-              src={ASSETS.hourglass}
+              src={publicAsset(ASSETS.hourglass)}
               alt=""
               width={21}
               height={28}

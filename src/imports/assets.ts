@@ -1,6 +1,13 @@
 /**
  * UI assets (SVG). Files live in `public/assets/` (exported from P3 Assets/SVG Files).
+ *
+ * Use `publicAsset()` for `src` URLs so paths work when the app is served from a subpath (`VITE_BASE`).
  */
+export function publicAsset(href: string): string {
+  const path = href.replace(/^\//, '')
+  return `${import.meta.env.BASE_URL}${path}`
+}
+
 export const ASSETS = {
   logo: '/assets/scribbld-01.svg',
   /** Header + footer horizontal rule — must stay `scribbld_Line.svg` */
